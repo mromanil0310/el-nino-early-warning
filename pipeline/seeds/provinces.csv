@@ -1,0 +1,16 @@
+id,name,region_code,pagasa_zone,lat,lon,is_pilot
+1,Pangasinan,I,Zone 1,16.0247,120.2397,true
+2,Ilocos Norte,I,Zone 1,18.1647,120.7116,true
+3,Ilocos Sur,I,Zone 1,17.5750,120.3870,true
+4,La Union,I,Zone 1,16.6159,120.3209,true
+5,Nueva Ecija,III,Zone 2,15.5784,121.0212,true
+6,Tarlac,III,Zone 2,15.4755,120.5960,true
+7,Pampanga,III,Zone 2,15.0794,120.6200,true
+8,Bulacan,III,Zone 2,14.7942,120.8800,true
+9,Zambales,III,Zone 2,15.5082,119.9697,true
+10,Bataan,III,Zone 2,14.6417,120.4818,true
+11,Laguna,IV-A,Zone 2,14.2691,121.4113,true
+12,Batangas,IV-A,Zone 2,13.7565,121.0583,true
+13,Quezon,IV-A,Zone 3,14.0313,122.1116,true
+14,Benguet,CAR,Zone 1,16.4023,120.5960,true
+15,Mountain Province,CAR,Zone 1,17.0000,121.0000,true

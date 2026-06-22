@@ -1,0 +1,73 @@
+version: 2
+
+# Tests on the COMPUTED dbt model outputs (sources.yml only tests the raw inputs).
+# These constrain crop_stage / vulnerability_index / risk_level / severity weight to
+# the documented value set, so any drift in the SQL CASE logic fails `dbt test`.
+# Keep the accepted_values in sync with scripts/crop_stage.py and the README formula.
+
+models:
+  - name: stg_pagasa_forecasts
+    description: "Cleaned PAGASA seasonal outlook — most recent forecast per province."
+    columns:
+      - name: province_id
+        tests:
+          - not_null
+      - name: seasonal_outlook
+        description: "Normalized PAGASA outlook label."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Much Below Normal', 'Below Normal', 'Near Normal', 'Above Normal', 'Much Above Normal']
+      - name: rainfall_severity_weight
+        description: "0.0 (wet) → 1.0 (severe drought). Drives the risk score."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0.0, 0.25, 0.75, 1.0]
+              quote: false
+
+  - name: stg_crop_calendars
+    description: "Current crop growth stage + PhilRice El Niño vulnerability per province × crop."
+    columns:
+      - name: province_id
+        tests:
+          - not_null
+      - name: crop_stage
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['pre-planting', 'vegetative', 'reproductive', 'harvest', 'off-season']
+      - name: vulnerability_index
+        description: "PhilRice vulnerability: 0.0 off-season → 1.0 reproductive."
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0.0, 0.3, 0.4, 0.5, 0.7, 1.0]
+              quote: false
+
+  - name: risk_scores
+    description: "Core mart: province × crop × week El Niño risk score + level."
+    columns:
+      - name: risk_score
+        tests:
+          - not_null
+      - name: risk_level
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['High', 'Medium', 'Low']
+      - name: trend
+        tests:
+          - accepted_values:
+              values: ['new', 'increasing', 'decreasing', 'stable']
+      - name: vulnerability_index
+        description: "Off-season (0.0) rows are excluded by the mart (WHERE vulnerability_index > 0)."
+        tests:
+          - accepted_values:
+              values: [0.3, 0.4, 0.5, 0.7, 1.0]
+              quote: false
+      - name: rainfall_severity_weight
+        tests:
+          - accepted_values:
+              values: [0.0, 0.25, 0.75, 1.0]
+              quote: false

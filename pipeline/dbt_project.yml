@@ -1,0 +1,54 @@
+name: 'elnino_early_warning'
+version: '1.0.0'
+config-version: 2
+
+profile: 'elnino'
+
+# Model file paths
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  elnino_early_warning:
+    # Staging: views by default (cheap, always fresh)
+    staging:
+      +materialized: view
+      +schema: staging
+
+    # Marts: tables (pre-computed for fast dashboard queries)
+    marts:
+      +materialized: table
+      +schema: public
+
+seeds:
+  elnino_early_warning:
+    +schema: public
+    provinces:
+      +column_types:
+        id: integer
+        lat: float
+        lon: float
+        is_pilot: boolean
+    crop_calendars:
+      +column_types:
+        id: integer
+        province_id: integer
+        planting_start: date
+        planting_end: date
+        harvest_start: date
+        harvest_end: date
+
+# Variables (can be overridden at run time)
+vars:
+  pilot_province_count: 15
+  risk_high_threshold: 65
+  risk_medium_threshold: 35

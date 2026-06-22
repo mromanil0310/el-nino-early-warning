@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pipeline:
+    name: Pipeline tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test deps
+        run: pip install pytest pyyaml
+      - name: Unit tests
+        run: python -m pytest pipeline/tests -v
+      - name: Validate dbt schema YAML
+        run: |
+          python -c "import yaml; yaml.safe_load(open('pipeline/models/schema.yml')); yaml.safe_load(open('pipeline/models/sources.yml')); print('dbt yml ok')"
+
+  dashboard:
+    name: Dashboard build (non-blocking)
+    runs-on: ubuntu-latest
+    # Non-blocking for now: a Supabase dep ships a .d.mts that TypeScript 5.9 mis-parses
+    # (ELN-022). Make this gating once the dependency/TS version is bumped.
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: npm ci
+      - run: npm run build

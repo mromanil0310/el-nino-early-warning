@@ -1,0 +1,109 @@
+version: "3.9"
+
+# Local development stack for El Niño Early Warning pipeline
+# Does NOT replace Railway.app for production — for local testing only.
+#
+# Usage:
+#   docker-compose up -d         # Start all services
+#   docker-compose run --rm dbt dbt run --profiles-dir /app/pipeline --target dev
+#   docker-compose run --rm airflow airflow dags trigger elnino_weekly
+
+services:
+  # ─── Local Postgres (mirrors Supabase schema) ──────────────────────────────
+  postgres:
+    image: postgis/postgis:15-3.4
+    container_name: elnino_postgres
+    environment:
+      POSTGRES_DB: elnino_dev
+      POSTGRES_USER: elnino
+      POSTGRES_PASSWORD: elnino_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./pipeline/supabase/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elnino -d elnino_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (Airflow task queue) ────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: elnino_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  # ─── Airflow webserver ──────────────────────────────────────────────────────
+  airflow-webserver:
+    image: apache/airflow:2.9.3
+    container_name: elnino_airflow_webserver
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env.local
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://elnino:elnino_dev@postgres:5432/elnino_dev
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://elnino:elnino_dev@postgres:5432/elnino_dev
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__DAGS_FOLDER: /app/pipeline/dags
+      PIPELINE_DIR: /app/pipeline
+    volumes:
+      - .:/app:ro
+    ports:
+      - "8080:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ─── Airflow scheduler ─────────────────────────────────────────────────────
+  airflow-scheduler:
+    image: apache/airflow:2.9.3
+    container_name: elnino_airflow_scheduler
+    depends_on:
+      airflow-webserver:
+        condition: service_healthy
+    env_file: .env.local
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://elnino:elnino_dev@postgres:5432/elnino_dev
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://elnino:elnino_dev@postgres:5432/elnino_dev
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CORE__DAGS_FOLDER: /app/pipeline/dags
+      PIPELINE_DIR: /app/pipeline
+    volumes:
+      - .:/app:ro
+    command: scheduler
+
+  # ─── Airflow worker ────────────────────────────────────────────────────────
+  airflow-worker:
+    image: apache/airflow:2.9.3
+    container_name: elnino_airflow_worker
+    depends_on:
+      - airflow-scheduler
+    env_file: .env.local
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://elnino:elnino_dev@postgres:5432/elnino_dev
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://elnino:elnino_dev@postgres:5432/elnino_dev
+      AIRFLOW__CELERY__BROKER_URL: redis://redis:6379/0
+      AIRFLOW__CORE__DAGS_FOLDER: /app/pipeline/dags
+      PIPELINE_DIR: /app/pipeline
+    volumes:
+      - .:/app:ro
+    command: celery worker
+
+volumes:
+  postgres_data:

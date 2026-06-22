@@ -1,0 +1,98 @@
+version: 2
+
+sources:
+  - name: elnino
+    description: "El Niño Early Warning System — raw tables in Supabase PostgreSQL"
+    database: postgres
+    schema: public
+    tables:
+      - name: provinces
+        description: "15 pilot provinces (Luzon). Seeded from provinces.csv."
+        columns:
+          - name: id
+            description: "Province ID (1–15)"
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: "Province name"
+            tests:
+              - not_null
+          - name: region_code
+            description: "PSA region code (e.g. I, III, IVA)"
+          - name: pagasa_zone
+            description: "PAGASA climate zone (1–4)"
+          - name: lat
+            description: "Province centroid latitude"
+          - name: lon
+            description: "Province centroid longitude"
+          - name: is_pilot
+            description: "True for all 15 pilot provinces"
+
+      - name: pagasa_forecasts
+        description: "PAGASA seasonal rainfall outlook per province, updated weekly by pagasa_scraper.py"
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: province_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('elnino', 'provinces')
+                  field: id
+          - name: forecast_date
+            description: "Date the forecast was published / scraped"
+            tests:
+              - not_null
+          - name: seasonal_outlook
+            description: "PAGASA seasonal outlook label: Much Below Normal, Below Normal, Near Normal, Above Normal, Much Above Normal"
+          - name: rainfall_anomaly_pct
+            description: "Numeric rainfall anomaly estimate (% vs normal). Negative = drier than normal."
+
+      - name: crop_calendars
+        description: "PhilRice crop calendar by province, crop, and season. 35 rows covering 15 provinces × palay wet/dry + corn."
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: province_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('elnino', 'provinces')
+                  field: id
+          - name: crop
+            description: "palay or corn"
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ['palay', 'corn']
+          - name: season
+            description: "wet or dry"
+            tests:
+              - accepted_values:
+                  values: ['wet', 'dry']
+          - name: planting_start
+            tests:
+              - not_null
+          - name: harvest_end
+            tests:
+              - not_null
+
+      - name: risk_scores
+        description: "Computed El Niño risk scores (dbt mart). Province × crop × week."
+
+      - name: weekly_digests
+        description: "AI-generated advisories per province per week (digest_generator.py)"
+
+      - name: cooperative_contacts
+        description: "Agricultural cooperative officers who receive weekly SMS alerts"
+
+      - name: sms_log
+        description: "Record of every SMS sent via Semaphore.ph"
+
+      - name: pipeline_runs
+        description: "Airflow pipeline execution log"

@@ -1,0 +1,33 @@
+province_id,crop,season,planting_start,planting_end,harvest_start,harvest_end,notes
+1,palay,wet,2026-06-01,2026-07-31,2026-09-15,2026-11-30,Main wet season rice; Pangasinan is top palay producer
+1,palay,dry,2026-12-01,2027-01-31,2027-03-15,2027-04-30,Dry season rice requires irrigation
+1,corn,wet,2026-06-15,2026-07-15,2026-09-01,2026-10-15,Yellow corn intercropped with rice areas
+2,palay,wet,2026-06-01,2026-07-15,2026-09-01,2026-11-15,Ilocos Norte; prone to drought stress in El Niño
+2,palay,dry,2026-11-15,2027-01-15,2027-03-01,2027-04-15,Dry season; irrigation-dependent
+3,palay,wet,2026-06-01,2026-07-31,2026-09-15,2026-11-30,Ilocos Sur wet season
+3,palay,dry,2026-12-01,2027-01-31,2027-03-15,2027-04-30,Dry season
+4,palay,wet,2026-06-15,2026-07-31,2026-09-15,2026-11-15,La Union; mountainous terrain affects timing
+4,palay,dry,2026-12-15,2027-02-01,2027-03-15,2027-04-30,Dry season
+5,palay,wet,2026-06-01,2026-07-31,2026-09-01,2026-11-30,Nueva Ecija — PH rice bowl; highest risk province
+5,palay,dry,2026-11-15,2027-01-15,2027-02-28,2027-04-15,Major dry season production
+5,corn,wet,2026-06-15,2026-07-31,2026-09-01,2026-10-31,Corn rotation areas
+6,palay,wet,2026-06-01,2026-07-31,2026-09-15,2026-11-30,Tarlac wet season
+6,palay,dry,2026-12-01,2027-01-31,2027-03-15,2027-04-30,Dry season
+7,palay,wet,2026-06-01,2026-07-31,2026-09-01,2026-11-15,Pampanga
+7,palay,dry,2026-11-15,2027-01-31,2027-03-01,2027-04-15,Dry season
+8,palay,wet,2026-06-01,2026-07-31,2026-09-01,2026-11-15,Bulacan
+8,palay,dry,2026-12-01,2027-01-31,2027-03-01,2027-04-30,Dry season
+9,palay,wet,2026-06-15,2026-07-31,2026-09-15,2026-11-30,Zambales
+9,corn,wet,2026-06-15,2026-07-31,2026-09-01,2026-10-31,Corn prominent in upland areas
+10,palay,wet,2026-06-01,2026-07-31,2026-09-15,2026-11-30,Bataan
+10,palay,dry,2026-12-01,2027-01-31,2027-03-15,2027-04-30,Dry season
+11,palay,wet,2026-06-01,2026-07-31,2026-09-01,2026-11-15,Laguna
+11,palay,dry,2026-12-01,2027-01-31,2027-03-01,2027-04-15,Dry season
+12,palay,wet,2026-06-15,2026-07-31,2026-09-15,2026-11-30,Batangas
+12,corn,wet,2026-06-15,2026-08-15,2026-09-15,2026-11-15,Batangas corn
+13,palay,wet,2026-06-01,2026-07-31,2026-09-01,2026-11-30,Quezon Province; major palay producer
+13,palay,dry,2026-11-15,2027-01-31,2027-03-01,2027-04-30,Dry season
+14,palay,wet,2026-06-15,2026-07-31,2026-09-01,2026-10-31,Benguet; highland rice terraces; shorter growing window
+14,corn,wet,2026-06-01,2026-07-15,2026-08-15,2026-10-15,Highland corn
+15,palay,wet,2026-07-01,2026-08-15,2026-09-15,2026-11-15,Mountain Province; highest altitude planting; later timing
+15,corn,wet,2026-06-15,2026-07-31,2026-09-01,2026-10-31,Mountain corn

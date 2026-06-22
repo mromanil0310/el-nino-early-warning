@@ -1,0 +1,27 @@
+elnino:
+  target: prod
+  outputs:
+    prod:
+      type: postgres
+      # Supabase connection — use the "Session pooler" string from Supabase dashboard
+      # Project Settings → Database → Connection string → Session mode
+      host: "{{ env_var('SUPABASE_DB_HOST') }}"
+      user: "{{ env_var('SUPABASE_DB_USER', 'postgres') }}"
+      password: "{{ env_var('SUPABASE_DB_PASSWORD') }}"
+      port: "{{ env_var('SUPABASE_DB_PORT', '5432') | int }}"
+      dbname: "{{ env_var('SUPABASE_DB_NAME', 'postgres') }}"
+      schema: public
+      threads: 4
+      connect_timeout: 30
+      keepalives_idle: 0
+
+    dev:
+      type: postgres
+      # Local dev via docker-compose (see docker-compose.yml)
+      host: localhost
+      user: elnino
+      password: elnino_dev
+      port: 5433
+      dbname: elnino_dev
+      schema: public
+      threads: 2
