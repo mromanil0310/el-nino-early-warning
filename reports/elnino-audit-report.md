@@ -63,7 +63,8 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 | ELN-020 | Coverage expansion: more provinces (Visayas/Mindanao), crops, localization (Ilocano/Cebuano) | L | open |
 | ELN-021 | Outcome feedback loop — did a warning lead to action / avoided loss? | L | open |
 | ELN-022 | Dashboard `npm ci` failed with `Invalid Version:` — 21 corrupt optional-native-binding entries (`@unrs/resolver-binding-*`, no `version`) in `package-lock.json` (npm optional-dep bug). | S | ✅ resolved 2026-06-23 |
-| ELN-023 | `next@14.2.5` has a published security advisory (flagged by npm on install) — bump to a patched 14.2.x and re-verify the build | S | open (found during ELN-022) |
+| ELN-023 | `next@14.2.5` runtime security advisory — bumped to `14.2.35` (latest 14.2.x) + `eslint-config-next` to match; npm ci / tsc / build re-verified | S | ✅ resolved 2026-06-23 |
+| ELN-024 | Residual **dev-only** audit item: `@next/eslint-plugin-next` advisory (via `eslint-config-next`); fix is a breaking bump to v16. Lint tooling only — does not ship to users. Defer to a tooling upgrade. | XS | open (found during ELN-023) |
 
 ---
 
