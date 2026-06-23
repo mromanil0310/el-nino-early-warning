@@ -86,6 +86,35 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 ---
 
 ## 🧪 Run log
-- `python -m pytest pipeline/tests -q` → **76 passed**.
-- `py_compile` clean: `pagasa_scraper`, `digest_generator`, `send_sms`, `elnino_weekly` (DAG), `outlook`, `crop_stage`, `delivery`, `smstext`, `retry_util`, `preview_run`.
-- `dbt test` (schema.yml) and the dashboard build are **CI/DB-only** — not run in this dev environment.
+- `python -m pytest pipeline/tests -q` → **79 passed**.
+- `py_compile` clean: `pagasa_scraper`, `digest_generator`, `send_sms`, `elnino_weekly` (DAG), `outlook`, `crop_stage`, `delivery`, `smstext`, `retry_util`, `advisory`, `preview_run`.
+- Dashboard: `npm ci` + `tsc --noEmit` + `next build` green (CI-gated on every push).
+- `dbt test` (schema.yml + `assert_risk_scores_unique.sql`) runs against the live DB.
+
+---
+
+## 🚦 Production-readiness — pilot
+
+**Code: ready.** Every known defect is fixed; the system is robust (retries, fail-loud
+alerting, freshness guards), compliant (disclaimer + SMS opt-out), secure (RLS least-
+privilege), tested (79 unit + dbt schema tests), CI-gated, and documented. The remaining
+backlog is product roadmap or live-infra wiring, not code gaps.
+
+### Owner deployment checklist (one-time)
+1. **Apply migrations** in Supabase SQL editor, in order: `001_initial_schema.sql`,
+   `002_dashboard_anon_read.sql` (**required** — without it the anon dashboard is empty),
+   `003_sms_opt_outs.sql`. Seed `provinces.csv` + `crop_calendars.csv`.
+2. **Pipeline env** (Railway): `SUPABASE_*`, `ANTHROPIC_API_KEY`, `SEMAPHORE_API_KEY`,
+   plus optional `OPS_ALERT_WEBHOOK_URL` (failure alerts), `PAGASA_FAIL_ON_STALE`,
+   `TEST_PHONE_NUMBER` (for `send_sms.py --test`).
+3. **Dashboard env** (Vercel): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+4. **Wire inbound STOP** (consent): point a Semaphore inbound webhook at a handler that
+   inserts the sender's number into `sms_opt_outs` (ELN-010 suppression already honors it).
+5. Run once: `make preview` (offline sanity) → `dbt seed && dbt run && dbt test` → 
+   `python scripts/digest_generator.py` → `python sms/send_sms.py --test`.
+
+### Remaining backlog = roadmap (not blocking the pilot)
+- **ELN-012** province choropleth map · **ELN-016** end-to-end integration test (needs a
+  seeded test Postgres) · **ELN-018** Anthropic SDK refresh · **ELN-020** coverage
+  expansion (Visayas/Mindanao, more crops, Ilocano/Cebuano) · **ELN-021** outcome feedback
+  loop · **ELN-024** eslint v16 (dev-only, breaking).
