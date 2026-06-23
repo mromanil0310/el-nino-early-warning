@@ -52,7 +52,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 | ELN-013 | Historical trend sparkline per province — `Sparkline.tsx` (last 8 weeks) in the expanded card, using the existing `getHistoricalScores` query | M | ✅ resolved 2026-06-23 |
 | ELN-014 | dbt uniqueness test on `risk_scores` (`province_id,crop,week_of`) — singular test `assert_risk_scores_unique.sql` | S | ✅ resolved 2026-06-23 |
 | ELN-015 | Dev setup — `Makefile` + `pipeline/requirements-dev.txt` | S | ✅ resolved 2026-06-23 |
-| ELN-016 | Integration test of scrape→dbt→digest→SMS against a seeded test Postgres | M | open |
+| ELN-016 | Integration tests: `test_pipeline_integration.py` runs the full scoring path over the real seed CSVs across a year of weekly dates (runnable, CI-gated); `test_db_smoke.py` is a live-DB schema smoke test that skips unless `INTEGRATION_DATABASE_URL` is set | M | ✅ resolved 2026-06-23 |
 
 ### P3 — Low (polish / product)
 | ID | Item | Effort | Status |
@@ -81,12 +81,12 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 - **ELN-022** (post-push): regenerated `dashboard/package-lock.json` (clean reinstall) to remove 21 corrupt `@unrs/resolver-binding-*` entries that crashed `npm ci`. Dashboard now passes `npm ci` + `tsc --noEmit` + `next build` locally; the CI dashboard job is now **gating** (no longer `continue-on-error`).
 - **ELN-023**: bumped `next` 14.2.5 → 14.2.35 (security advisory).
 - **Batch (P1/P2/P3 close-out):** ELN-005 (trend-join first-run guard), ELN-007 (multi-line advisory parser), ELN-009 (E.164 phone normalization), ELN-011 (early/late vegetative labels), ELN-014 (dbt uniqueness test), ELN-015 (Makefile + requirements-dev), ELN-017 (env-only test phone).
-- **Compliance/security/UX batch:** ELN-010 (SMS opt-out suppression + migration 003), ELN-019 (anon-read RLS migration 002 — fixed the empty-dashboard bug), ELN-013 (dashboard trend sparkline). **79 unit tests passing; dashboard `tsc` + build green.**
+- **Compliance/security/UX batch:** ELN-010 (SMS opt-out suppression + migration 003), ELN-019 (anon-read RLS migration 002 — fixed the empty-dashboard bug), ELN-013 (dashboard trend sparkline). **83 unit tests passing (+3 skipped DB smoke); dashboard `tsc` + build green.**
 
 ---
 
 ## 🧪 Run log
-- `python -m pytest pipeline/tests -q` → **79 passed**.
+- `python -m pytest pipeline/tests -q` → **83 passed** (+3 skipped DB smoke).
 - `py_compile` clean: `pagasa_scraper`, `digest_generator`, `send_sms`, `elnino_weekly` (DAG), `outlook`, `crop_stage`, `delivery`, `smstext`, `retry_util`, `advisory`, `preview_run`.
 - Dashboard: `npm ci` + `tsc --noEmit` + `next build` green (CI-gated on every push).
 - `dbt test` (schema.yml + `assert_risk_scores_unique.sql`) runs against the live DB.
@@ -114,7 +114,7 @@ backlog is product roadmap or live-infra wiring, not code gaps.
    `python scripts/digest_generator.py` → `python sms/send_sms.py --test`.
 
 ### Remaining backlog = roadmap (not blocking the pilot)
-- **ELN-016** end-to-end integration test (needs a seeded test Postgres) · **ELN-018**
+- **ELN-018**
   Anthropic SDK refresh · **ELN-020** coverage expansion (Visayas/Mindanao, more crops,
   Ilocano/Cebuano) · **ELN-021** outcome feedback loop · **ELN-024** eslint v16 (dev-only,
   breaking). (**ELN-012** map ✅ shipped.)

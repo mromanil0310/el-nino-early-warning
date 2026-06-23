@@ -55,7 +55,14 @@ def load_csv(name: str) -> list[dict]:
         return list(csv.DictReader(f))
 
 
-def run(as_of: date) -> None:
+def compute_scores(as_of: date, forecast: dict[int, tuple[str, float]] = FORECAST) -> list[dict]:
+    """Reproduce the risk_scores.sql output for `as_of` over the seed data (no DB).
+
+    Applies the same staging filter (active crops only), off-season exclusion
+    (vulnerability > 0), formula, and thresholds the dbt models use. Returns the rows
+    sorted highest-risk first. Pure + importable, so it backs both the preview and the
+    integration test.
+    """
     provinces = {int(p["id"]): p["name"] for p in load_csv("provinces.csv")}
     rows = []
     for c in load_csv("crop_calendars.csv"):
@@ -68,16 +75,20 @@ def run(as_of: date) -> None:
         if vuln <= 0:  # risk_scores.sql excludes off-season (WHERE vulnerability_index > 0)
             continue
         pid = int(c["province_id"])
-        outlook, anomaly = FORECAST[pid]
+        outlook, anomaly = forecast[pid]
         weight = severity_weight(outlook)
         score = round(weight * vuln * 100, 1)
         rows.append({
-            "province": provinces[pid], "crop": c["crop"], "season": c["season"],
+            "province": provinces[pid], "province_id": pid, "crop": c["crop"], "season": c["season"],
             "outlook": outlook, "anomaly": anomaly, "stage": stage, "vuln": vuln,
             "weight": weight, "score": score, "level": classify(score),
         })
-
     rows.sort(key=lambda r: (-r["score"], r["province"]))
+    return rows
+
+
+def run(as_of: date) -> None:
+    rows = compute_scores(as_of)
     week = as_of - timedelta(days=as_of.weekday())
 
     print(f"\n  EL NIÑO AGRICULTURAL RISK — week of {week:%b %d, %Y}  (as-of {as_of})")
