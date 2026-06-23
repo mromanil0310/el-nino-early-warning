@@ -23,11 +23,8 @@ jobs:
           python -c "import yaml; yaml.safe_load(open('pipeline/models/schema.yml')); yaml.safe_load(open('pipeline/models/sources.yml')); print('dbt yml ok')"
 
   dashboard:
-    name: Dashboard build (non-blocking)
+    name: Dashboard build
     runs-on: ubuntu-latest
-    # Non-blocking for now: a Supabase dep ships a .d.mts that TypeScript 5.9 mis-parses
-    # (ELN-022). Make this gating once the dependency/TS version is bumped.
-    continue-on-error: true
     defaults:
       run:
         working-directory: dashboard
@@ -39,4 +36,5 @@ jobs:
           cache: npm
           cache-dependency-path: dashboard/package-lock.json
       - run: npm ci
+      - run: npx tsc --noEmit
       - run: npm run build

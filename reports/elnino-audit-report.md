@@ -62,7 +62,8 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 | ELN-019 | Verify/test Supabase RLS policies (anon read-only, service-key server-only) | S | open |
 | ELN-020 | Coverage expansion: more provinces (Visayas/Mindanao), crops, localization (Ilocano/Cebuano) | L | open |
 | ELN-021 | Outcome feedback loop — did a warning lead to action / avoided loss? | L | open |
-| ELN-022 | Dashboard build is broken in CI (non-blocking job): `npm ci` fails with `npm error Invalid Version:` — a malformed version field in `dashboard/package.json` / `package-lock.json`. Separately, `@supabase/storage-js` ships a `.d.mts` that TS 5.9.3 mis-parses on local typecheck. Fix the lockfile/deps, then make the dashboard job gating. | S | open (confirmed via first CI run) |
+| ELN-022 | Dashboard `npm ci` failed with `Invalid Version:` — 21 corrupt optional-native-binding entries (`@unrs/resolver-binding-*`, no `version`) in `package-lock.json` (npm optional-dep bug). | S | ✅ resolved 2026-06-23 |
+| ELN-023 | `next@14.2.5` has a published security advisory (flagged by npm on install) — bump to a patched 14.2.x and re-verify the build | S | open (found during ELN-022) |
 
 ---
 
@@ -76,6 +77,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 - Added `preview_run.py` offline no-DB pipeline preview.
 
 **This session (2026-06-23):** ELN-001, 002, 003, 004, 006, 008 (see sprint table above).
+- **ELN-022** (post-push): regenerated `dashboard/package-lock.json` (clean reinstall) to remove 21 corrupt `@unrs/resolver-binding-*` entries that crashed `npm ci`. Dashboard now passes `npm ci` + `tsc --noEmit` + `next build` locally; the CI dashboard job is now **gating** (no longer `continue-on-error`).
 
 ---
 
