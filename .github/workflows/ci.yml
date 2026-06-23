@@ -37,4 +37,9 @@ jobs:
           cache-dependency-path: dashboard/package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
+      # Static build check only — placeholder Supabase vars so module-load createClient()
+      # doesn't throw. Real NEXT_PUBLIC_* values are set in Vercel for the deployed build.
       - run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key-for-ci-build
