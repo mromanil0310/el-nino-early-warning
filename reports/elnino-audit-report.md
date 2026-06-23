@@ -62,7 +62,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 | ELN-019 | Verify/test Supabase RLS policies (anon read-only, service-key server-only) | S | open |
 | ELN-020 | Coverage expansion: more provinces (Visayas/Mindanao), crops, localization (Ilocano/Cebuano) | L | open |
 | ELN-021 | Outcome feedback loop — did a warning lead to action / avoided loss? | L | open |
-| ELN-022 | Dashboard CI is non-blocking: `@supabase/storage-js` ships a `.d.mts` TS 5.9.3 mis-parses; bump dep/TS, then make the dashboard job gating | S | open (found this sprint) |
+| ELN-022 | Dashboard build is broken in CI (non-blocking job): `npm ci` fails with `npm error Invalid Version:` — a malformed version field in `dashboard/package.json` / `package-lock.json`. Separately, `@supabase/storage-js` ships a `.d.mts` that TS 5.9.3 mis-parses on local typecheck. Fix the lockfile/deps, then make the dashboard job gating. | S | open (confirmed via first CI run) |
 
 ---
 
