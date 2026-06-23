@@ -4,6 +4,7 @@ import { getLatestRiskScores, RiskScore } from '../lib/supabase'
 import ProvinceCard from '../components/ProvinceCard'
 import ProvinceMap from '../components/ProvinceMap'
 import RiskSummaryBar from '../components/RiskSummaryBar'
+import FeedbackSummary from '../components/FeedbackSummary'
 
 const DISCLAIMER =
   'DISCLAIMER: This dashboard is a decision-support tool based on public PAGASA seasonal forecasts and PhilRice crop calendars. Risk scores are model estimates. Verify with your local Department of Agriculture or PAGASA office before taking action. Not a substitute for official advisories.'
@@ -181,6 +182,9 @@ export default function Home() {
               No provinces match the current filter.
             </div>
           )}
+
+          {/* Cooperative feedback impact (self-hides until there is feedback) */}
+          {!loading && scores.length > 0 && <FeedbackSummary />}
         </main>
 
         {/* Footer */}

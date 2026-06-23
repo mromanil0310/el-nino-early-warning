@@ -107,3 +107,32 @@ export async function getHistoricalScores(
   if (error) return []
   return (data as RiskScore[]) || []
 }
+
+export interface FeedbackTotals {
+  acted: number
+  not_acted: number
+  need_help: number
+  unknown: number
+  total: number
+}
+
+// ELN-021: reads the anon-safe `feedback_summary` view (counts only, no PII) and
+// aggregates the latest week's cooperative replies into headline totals.
+export async function getFeedbackTotals(): Promise<FeedbackTotals | null> {
+  const { data, error } = await supabase
+    .from('feedback_summary')
+    .select('week_of, response_code, responses')
+    .order('week_of', { ascending: false })
+
+  if (error || !data || data.length === 0) return null
+
+  const latestWeek = (data[0] as any).week_of
+  const totals: FeedbackTotals = { acted: 0, not_acted: 0, need_help: 0, unknown: 0, total: 0 }
+  for (const row of data as any[]) {
+    if (row.week_of !== latestWeek) continue
+    const n = Number(row.responses) || 0
+    if (row.response_code in totals) (totals as any)[row.response_code] += n
+    totals.total += n
+  }
+  return totals.total > 0 ? totals : null
+}
