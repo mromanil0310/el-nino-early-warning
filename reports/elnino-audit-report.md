@@ -10,7 +10,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 
 **Goal:** put the project on a safe operational footing — version control, CI, fail-loud ops, and the highest-impact correctness fixes.
 
-**Test status:** **76 unit tests passing** (pure logic). Pipeline modules also `py_compile` clean.
+**Test status:** **83 unit tests passing (+3 skipped DB smoke)** (pure logic). Pipeline modules also `py_compile` clean.
 
 **Verification caveat (reported honestly):** `pdfplumber`, `supabase`, `anthropic`, and the Airflow runtime are **not installed in this dev environment**, so changes inside the DAG and the Supabase/Claude/PDF call sites are **reviewed + compiled, not executed locally**. All *pure* logic (scoring, SMS encoding, retry, outlook) is fully unit-tested. dbt schema tests and the dashboard build run in CI / against the live DB.
 
