@@ -39,9 +39,9 @@ with_stage AS (
             WHEN CURRENT_DATE < planting_start
                 THEN 'pre-planting'
             WHEN CURRENT_DATE BETWEEN planting_start AND planting_end
-                THEN 'vegetative'
+                THEN 'early-vegetative'
             WHEN CURRENT_DATE BETWEEN planting_end AND (planting_end + (harvest_start - planting_end) / 2)
-                THEN 'vegetative'
+                THEN 'late-vegetative'
             WHEN CURRENT_DATE BETWEEN (planting_end + (harvest_start - planting_end) / 2) AND harvest_start
                 THEN 'reproductive'
             WHEN CURRENT_DATE BETWEEN harvest_start AND harvest_end

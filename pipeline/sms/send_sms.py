@@ -34,9 +34,9 @@ DRY_RUN = os.getenv("SMS_DRY_RUN", "false").lower() == "true"
 # Pure delivery-status logic lives in delivery.py (no I/O) so it can be unit-tested.
 # Robust import: works both run-as-script and imported as `sms.send_sms` (Airflow).
 try:
-    from delivery import is_successful_send, attach_digests
+    from delivery import is_successful_send, attach_digests, normalize_ph_phone
 except ImportError:  # pragma: no cover - import path differs under Airflow
-    from sms.delivery import is_successful_send, attach_digests
+    from sms.delivery import is_successful_send, attach_digests, normalize_ph_phone
 
 # retry_util lives in ../scripts — make it importable whether run as a script or package.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
@@ -150,8 +150,12 @@ def run(week_of: date | None = None) -> int:
             log.warning(f"No SMS text for contact {contact['id']} — skipping")
             continue
 
-        phone = contact["phone_number"]
+        raw_phone = contact["phone_number"]
+        phone = normalize_ph_phone(raw_phone)
         province_name = (contact.get("provinces") or {}).get("name", "Unknown")
+        if not phone:
+            log.warning(f"  Skipping {contact['contact_name']} ({province_name}): invalid phone {raw_phone!r}")
+            continue
         log.info(f"  Sending to {contact['contact_name']} ({province_name}) → {phone}")
 
         response = send_sms(phone, sms_text)
@@ -168,12 +172,14 @@ def run(week_of: date | None = None) -> int:
 
 
 if __name__ == "__main__":
-    import sys
     if "--test" in sys.argv:
-        # Test: send to Biboy's number only
-        test_number = os.environ.get("TEST_PHONE_NUMBER", "+639495034475")
+        # ELN-017: test recipient comes from the environment only (no hardcoded number).
+        test_number = normalize_ph_phone(os.environ.get("TEST_PHONE_NUMBER", ""))
+        if not test_number:
+            log.error("TEST MODE: set TEST_PHONE_NUMBER to a valid PH mobile number (e.g. 09171234567).")
+            sys.exit(1)
         log.info(f"TEST MODE: sending to {test_number} only")
-        result = send_sms(test_number, f"El Niño Early Warning TEST — Nueva Ecija Palay: HIGH risk this week. Delay replanting. -ELNINO")
+        result = send_sms(test_number, "El Niño Early Warning TEST — Nueva Ecija Palay: HIGH risk this week. Delay replanting. -ELNINO")
         log.info(f"Test result: {result}")
     else:
         run()

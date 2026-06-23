@@ -108,13 +108,13 @@ class TestCropStageDerivation:
         assert self.stage(date(2026, 5, 15)) == ('pre-planting', 0.4)
 
     def test_early_vegetative(self):
-        assert self.stage(date(2026, 6, 1)) == ('vegetative', 0.5)   # planting_start (inclusive)
-        assert self.stage(date(2026, 7, 1)) == ('vegetative', 0.5)
-        assert self.stage(date(2026, 7, 31)) == ('vegetative', 0.5)  # planting_end → still early (first-match)
+        assert self.stage(date(2026, 6, 1)) == ('early-vegetative', 0.5)   # planting_start (inclusive)
+        assert self.stage(date(2026, 7, 1)) == ('early-vegetative', 0.5)
+        assert self.stage(date(2026, 7, 31)) == ('early-vegetative', 0.5)  # planting_end → still early (first-match)
 
     def test_late_vegetative(self):
-        assert self.stage(date(2026, 8, 10)) == ('vegetative', 0.7)
-        assert self.stage(date(2026, 8, 23)) == ('vegetative', 0.7)  # midpoint (inclusive, first-match)
+        assert self.stage(date(2026, 8, 10)) == ('late-vegetative', 0.7)
+        assert self.stage(date(2026, 8, 23)) == ('late-vegetative', 0.7)  # midpoint (inclusive, first-match)
 
     def test_reproductive_maximum(self):
         assert self.stage(date(2026, 8, 24)) == ('reproductive', 1.0)
@@ -128,12 +128,13 @@ class TestCropStageDerivation:
     def test_off_season_zero(self):
         assert self.stage(date(2026, 12, 25)) == ('off-season', 0.0)
 
-    def test_vegetative_label_covers_two_vulnerabilities(self):
-        # The exact divergence the old test missed: 'vegetative' is BOTH 0.5 and 0.7.
+    def test_early_and_late_vegetative_are_distinct_labels(self):
+        # ELN-011: the two vegetative windows now carry distinct labels + vulnerabilities.
         early = self.stage(date(2026, 7, 1))
         late = self.stage(date(2026, 8, 10))
-        assert early[0] == late[0] == 'vegetative'
-        assert early[1] == 0.5 and late[1] == 0.7
+        assert early == ('early-vegetative', 0.5)
+        assert late == ('late-vegetative', 0.7)
+        assert early[0] != late[0]
 
 
 class TestRiskScoreFormula:

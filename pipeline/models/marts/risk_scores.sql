@@ -97,9 +97,26 @@ scored AS (
     WHERE vulnerability_index > 0  -- exclude off-season crops
 ),
 
--- Add week-over-week trend by comparing to prior week's score
--- Uses a self-referencing LAG on the materialized table from last week
--- On first run, prior_score is NULL → trend = 'new'
+-- Prior-week scores for the trend calculation. ELN-005: this model self-references
+-- {{ this }} (last week's table), which does NOT exist on the first run or after a
+-- `--full-refresh` (the table is dropped before the build). Guard with an existence
+-- check so the build never fails — on first run prior_scores is empty and trend='new'.
+prior_scores AS (
+    {% if adapter.get_relation(this.database, this.schema, this.identifier) is not none %}
+    SELECT province_id, crop, week_of, risk_score
+    FROM {{ this }}
+    {% else %}
+    SELECT
+        NULL::integer AS province_id,
+        NULL::text    AS crop,
+        NULL::date    AS week_of,
+        NULL::numeric AS risk_score
+    WHERE FALSE
+    {% endif %}
+),
+
+-- Add week-over-week trend by comparing to prior week's score.
+-- On first run (empty prior_scores), prior_week_score is NULL → trend = 'new'.
 with_trend AS (
     SELECT
         s.*,
@@ -112,7 +129,7 @@ with_trend AS (
         END AS trend
 
     FROM scored s
-    LEFT JOIN {{ this }} prior
+    LEFT JOIN prior_scores prior
         ON  prior.province_id = s.province_id
         AND prior.crop        = s.crop
         AND prior.week_of     = (s.week_of - INTERVAL '7 days')::date

@@ -1,0 +1,9 @@
+# Dev/test dependencies — enough to run the unit tests + dbt-YAML lint WITHOUT the
+# heavy runtime stack (Airflow/dbt/supabase/pdfplumber). The pure logic modules
+# (outlook, crop_stage, smstext, retry_util, advisory, delivery) have no runtime deps.
+#
+#   pip install -r pipeline/requirements-dev.txt && python -m pytest pipeline/tests
+#
+# For the full pipeline runtime, install pipeline/requirements.txt instead.
+pytest==8.3.2
+pyyaml==6.0.2

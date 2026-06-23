@@ -14,7 +14,7 @@ import sys
 
 # delivery.py is a pure module (no Supabase/requests), importable on its own.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "sms"))
-from delivery import is_successful_send, attach_digests  # noqa: E402
+from delivery import is_successful_send, attach_digests, normalize_ph_phone  # noqa: E402
 
 
 class TestFailures:
@@ -85,3 +85,19 @@ class TestAttachDigests:
     def test_empty_inputs(self):
         assert attach_digests([], self.DIGESTS) == []
         assert attach_digests(self.CONTACTS, []) == []
+
+
+class TestNormalizePhPhone:
+    def test_all_valid_shapes_map_to_e164(self):
+        for raw in ("09171234567", "+639171234567", "639171234567", "9171234567",
+                    "0917 123 4567", "0917-123-4567", "(0917) 123-4567"):
+            assert normalize_ph_phone(raw) == "+639171234567", raw
+
+    def test_invalid_numbers_return_none(self):
+        for raw in ("", "12345", "0817234567", "+19171234567", "0917123456",   # too short / not 9-lead / wrong CC
+                    "091712345678", "abcd", "+63917123456a"):
+            assert normalize_ph_phone(raw) is None, raw
+
+    def test_landline_and_short_codes_rejected(self):
+        assert normalize_ph_phone("0288881234") is None   # 02 landline, not mobile
+        assert normalize_ph_phone("911") is None

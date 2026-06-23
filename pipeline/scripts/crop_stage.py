@@ -12,8 +12,8 @@ models/schema.yml additionally constrain the SQL output to the value set below.
 
 PhilRice El Niño vulnerability (most sensitive at reproductive/flowering):
     pre-planting        0.4   manageable via delayed-planting decision
-    vegetative (early)  0.5   planting window
-    vegetative (late)   0.7   planting_end → midpoint to harvest
+    early-vegetative    0.5   planting window
+    late-vegetative     0.7   planting_end → midpoint to harvest
     reproductive        1.0   flowering/grain-filling — spikelet sterility
     harvest             0.3   delayed harvest / threshing losses
     off-season          0.0   no growing crop at risk
@@ -21,10 +21,10 @@ PhilRice El Niño vulnerability (most sensitive at reproductive/flowering):
 
 from datetime import date, timedelta
 
-# Every (crop_stage, vulnerability_index) pair the logic can emit. Note 'vegetative'
-# appears with BOTH 0.5 (early) and 0.7 (late): the stage label alone does not
-# determine vulnerability — the date does. Kept in sync with models/schema.yml.
-VALID_STAGES = ("pre-planting", "vegetative", "reproductive", "harvest", "off-season")
+# Every (crop_stage, vulnerability_index) pair the logic can emit. early-vegetative
+# (0.5) and late-vegetative (0.7) are distinct labels (ELN-011) so advisories and the
+# dashboard convey which window a crop is in. Kept in sync with models/schema.yml.
+VALID_STAGES = ("pre-planting", "early-vegetative", "late-vegetative", "reproductive", "harvest", "off-season")
 VALID_VULNERABILITIES = (0.0, 0.3, 0.4, 0.5, 0.7, 1.0)
 
 
@@ -43,11 +43,11 @@ def derive_stage(
     if current < planting_start:
         return ("pre-planting", 0.4)
     if planting_start <= current <= planting_end:
-        return ("vegetative", 0.5)          # early vegetative
+        return ("early-vegetative", 0.5)
     # Integer day-count // 2, matching Postgres `(harvest_start - planting_end) / 2`.
     midpoint = planting_end + timedelta(days=(harvest_start - planting_end).days // 2)
     if planting_end <= current <= midpoint:
-        return ("vegetative", 0.7)          # late vegetative
+        return ("late-vegetative", 0.7)
     if midpoint <= current <= harvest_start:
         return ("reproductive", 1.0)
     if harvest_start <= current <= harvest_end:

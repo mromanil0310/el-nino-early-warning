@@ -10,7 +10,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 
 **Goal:** put the project on a safe operational footing — version control, CI, fail-loud ops, and the highest-impact correctness fixes.
 
-**Test status:** **67 unit tests passing** (pure logic). Pipeline modules also `py_compile` clean.
+**Test status:** **76 unit tests passing** (pure logic). Pipeline modules also `py_compile` clean.
 
 **Verification caveat (reported honestly):** `pdfplumber`, `supabase`, `anthropic`, and the Airflow runtime are **not installed in this dev environment**, so changes inside the DAG and the Supabase/Claude/PDF call sites are **reviewed + compiled, not executed locally**. All *pure* logic (scoring, SMS encoding, retry, outlook) is fully unit-tested. dbt schema tests and the dashboard build run in CI / against the live DB.
 
@@ -37,27 +37,27 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 ### P1 — High (correctness / robustness)
 | ID | Item | Effort | Status |
 |----|------|--------|--------|
-| ELN-005 | Verify self-referencing `{{ this }}` trend join in `risk_scores.sql` on first run / full refresh | S | open |
+| ELN-005 | Self-referencing `{{ this }}` trend join crashed on first run / `--full-refresh` (table doesn't exist yet) — guarded with `adapter.get_relation` existence check + empty `prior_scores` CTE | S | ✅ resolved 2026-06-23 |
 | ELN-006 | Retry/backoff | M | ✅ shipped |
-| ELN-007 | Harden the Claude advisory parser (multi-line `ADVISORY_*` truncates to first line); move to structured output / tool use | M | open |
+| ELN-007 | Harden the Claude advisory parser (was truncating multi-line `ADVISORY_*` to first line) — pure `advisory.parse_advisory` captures values to the next label | M | ✅ resolved 2026-06-23 |
 | ELN-008 | Encoding-aware SMS | S | ✅ shipped |
-| ELN-009 | Phone-number validation/normalization to E.164 before Semaphore | S | open |
+| ELN-009 | Phone E.164 normalization (`normalize_ph_phone`) before Semaphore; invalid numbers skipped | S | ✅ resolved 2026-06-23 |
 | ELN-010 | SMS opt-out / unsubscribe (consent / NTC compliance) | M | open |
 
 ### P2 — Medium (quality / UX)
 | ID | Item | Effort | Status |
 |----|------|--------|--------|
-| ELN-011 | Emit distinct early/late vegetative `crop_stage` labels (SQL collapses both to `vegetative`) | S | open |
+| ELN-011 | Distinct `early-vegetative`/`late-vegetative` `crop_stage` labels (SQL + `crop_stage.py` + schema.yml + tests) | S | ✅ resolved 2026-06-23 |
 | ELN-012 | Dashboard province map (choropleth — lat/lon already seeded) | M | open |
 | ELN-013 | Historical week-over-week trend chart per province | M | open |
-| ELN-014 | Expand dbt tests (uniqueness on `province_id,crop,week_of`) + run `dbt test` in CI | S | open |
-| ELN-015 | Dev setup (`Makefile` + `requirements-dev`, venv) so scraper/sms import cleanly | S | open |
+| ELN-014 | dbt uniqueness test on `risk_scores` (`province_id,crop,week_of`) — singular test `assert_risk_scores_unique.sql` | S | ✅ resolved 2026-06-23 |
+| ELN-015 | Dev setup — `Makefile` + `pipeline/requirements-dev.txt` | S | ✅ resolved 2026-06-23 |
 | ELN-016 | Integration test of scrape→dbt→digest→SMS against a seeded test Postgres | M | open |
 
 ### P3 — Low (polish / product)
 | ID | Item | Effort | Status |
 |----|------|--------|--------|
-| ELN-017 | Remove hardcoded test phone number literal in `send_sms.py --test` (env-only) | XS | open |
+| ELN-017 | Remove hardcoded test phone number literal in `send_sms.py --test` (now env-only, normalized) | XS | ✅ resolved 2026-06-23 |
 | ELN-018 | Bump Anthropic SDK (0.34.2 → current); consider tool-based structured advisory | S | open |
 | ELN-019 | Verify/test Supabase RLS policies (anon read-only, service-key server-only) | S | open |
 | ELN-020 | Coverage expansion: more provinces (Visayas/Mindanao), crops, localization (Ilocano/Cebuano) | L | open |
@@ -79,10 +79,12 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 
 **This session (2026-06-23):** ELN-001, 002, 003, 004, 006, 008 (see sprint table above).
 - **ELN-022** (post-push): regenerated `dashboard/package-lock.json` (clean reinstall) to remove 21 corrupt `@unrs/resolver-binding-*` entries that crashed `npm ci`. Dashboard now passes `npm ci` + `tsc --noEmit` + `next build` locally; the CI dashboard job is now **gating** (no longer `continue-on-error`).
+- **ELN-023**: bumped `next` 14.2.5 → 14.2.35 (security advisory).
+- **Batch (P1/P2/P3 close-out):** ELN-005 (trend-join first-run guard), ELN-007 (multi-line advisory parser), ELN-009 (E.164 phone normalization), ELN-011 (early/late vegetative labels), ELN-014 (dbt uniqueness test), ELN-015 (Makefile + requirements-dev), ELN-017 (env-only test phone). **76 unit tests passing.**
 
 ---
 
 ## 🧪 Run log
-- `python -m pytest pipeline/tests -q` → **67 passed**.
+- `python -m pytest pipeline/tests -q` → **76 passed**.
 - `py_compile` clean: `pagasa_scraper`, `digest_generator`, `send_sms`, `elnino_weekly` (DAG), `outlook`, `crop_stage`, `delivery`, `smstext`, `retry_util`, `preview_run`.
 - `dbt test` (schema.yml) and the dashboard build are **CI/DB-only** — not run in this dev environment.

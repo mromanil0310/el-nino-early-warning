@@ -23,9 +23,11 @@ from supabase import create_client, Client
 try:
     from smstext import fit_sms
     from retry_util import retry_call
+    from advisory import parse_advisory
 except ImportError:  # pragma: no cover - import path differs under Airflow
     from scripts.smstext import fit_sms
     from scripts.retry_util import retry_call
+    from scripts.advisory import parse_advisory
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -118,11 +120,9 @@ Do not add headers, bullets, or any other text."""
     )
 
     raw = message.content[0].text.strip()
-    lines = {
-        line.split(":", 1)[0].strip(): line.split(":", 1)[1].strip()
-        for line in raw.splitlines()
-        if ":" in line and line.split(":", 1)[0].strip() in ("ADVISORY_EN", "ADVISORY_TL", "SMS_TEXT")
-    }
+    # Multi-line-safe parse: each value runs to the next label, so a multi-sentence
+    # ADVISORY_EN/TL isn't truncated to its first line (ELN-007).
+    lines = parse_advisory(raw)
 
     advisory_en = lines.get("ADVISORY_EN", f"{province_name} El Niño Risk: {risk_level}. Consult your DA field office for specific guidance.")
     advisory_tl = lines.get("ADVISORY_TL", f"Panganib ng El Niño sa {province_name}: {risk_level}. Makipag-ugnayan sa inyong DA.")
