@@ -29,5 +29,8 @@ numpy==1.26.4
 # Environment management
 python-dotenv==1.0.1
 
+# Inbound SMS webhook service (pipeline/webhook/inbound.py)
+flask==3.0.3
+
 # Utilities
 tenacity==9.0.0  # retry logic for API calls

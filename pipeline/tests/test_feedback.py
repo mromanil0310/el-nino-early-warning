@@ -9,7 +9,9 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
-from feedback import parse_feedback, ACTED, NOT_ACTED, NEED_HELP, UNKNOWN  # noqa: E402
+from feedback import (  # noqa: E402
+    parse_feedback, classify_inbound, ACTED, NOT_ACTED, NEED_HELP, UNKNOWN,
+)
 
 
 class TestNumericReplies:
@@ -54,3 +56,15 @@ class TestPrecedenceAndUnknown:
         assert parse_feedback("") == UNKNOWN
         assert parse_feedback("   ") == UNKNOWN
         assert parse_feedback("salamat sa update") == UNKNOWN
+
+
+class TestClassifyInbound:
+    def test_opt_out_keywords(self):
+        for raw in ("STOP", "stop", "stop all", "Unsubscribe", "TIGIL po"):
+            assert classify_inbound(raw) == ("opt_out", None), raw
+
+    def test_feedback_routes_to_parse_feedback(self):
+        assert classify_inbound("1") == ("feedback", ACTED)
+        assert classify_inbound("hindi pa") == ("feedback", NOT_ACTED)
+        assert classify_inbound("tulong po") == ("feedback", NEED_HELP)
+        assert classify_inbound("salamat") == ("feedback", UNKNOWN)

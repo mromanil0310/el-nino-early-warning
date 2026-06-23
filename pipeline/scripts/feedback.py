@@ -10,6 +10,23 @@ NOT_ACTED = "not_acted"
 NEED_HELP = "need_help"
 UNKNOWN = "unknown"
 
+# Inbound reply that means "unsubscribe" → suppression (ELN-010), not feedback.
+OPT_OUT_KEYWORDS = {"stop", "unsubscribe", "unsub", "tigil", "stopall", "wakasan"}
+
+
+def classify_inbound(text: str) -> tuple[str, str | None]:
+    """Route an inbound SMS reply for the webhook (ELN-010 + ELN-021).
+
+    Returns ('opt_out', None) for an unsubscribe reply, otherwise
+    ('feedback', <response_code>) using parse_feedback(). The first word is enough to
+    catch "STOP", "STOP ALL", "TIGIL po", etc.
+    """
+    t = (text or "").strip().lower()
+    first = t.split()[0] if t.split() else ""
+    if t in OPT_OUT_KEYWORDS or first in OPT_OUT_KEYWORDS:
+        return ("opt_out", None)
+    return ("feedback", parse_feedback(text))
+
 # Whole-token matches (checked against the full reply and its first word).
 _ACTED_TOKENS = {"1", "yes", "y", "oo", "opo", "ok", "okay", "done", "ginawa", "tapos", "sige"}
 _NOT_ACTED_TOKENS = {"2", "no", "n", "hindi", "wala", "di"}
