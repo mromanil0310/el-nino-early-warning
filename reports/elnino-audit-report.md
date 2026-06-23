@@ -48,7 +48,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 | ID | Item | Effort | Status |
 |----|------|--------|--------|
 | ELN-011 | Distinct `early-vegetative`/`late-vegetative` `crop_stage` labels (SQL + `crop_stage.py` + schema.yml + tests) | S | ✅ resolved 2026-06-23 |
-| ELN-012 | Dashboard province map (choropleth — lat/lon already seeded) | M | open |
+| ELN-012 | Dashboard risk map — `ProvinceMap.tsx` plots each pilot province by lat/lon, colored by its worst crop's risk level, with a ranked list + legend (dependency-free, no GeoJSON) | M | ✅ resolved 2026-06-23 |
 | ELN-013 | Historical trend sparkline per province — `Sparkline.tsx` (last 8 weeks) in the expanded card, using the existing `getHistoricalScores` query | M | ✅ resolved 2026-06-23 |
 | ELN-014 | dbt uniqueness test on `risk_scores` (`province_id,crop,week_of`) — singular test `assert_risk_scores_unique.sql` | S | ✅ resolved 2026-06-23 |
 | ELN-015 | Dev setup — `Makefile` + `pipeline/requirements-dev.txt` | S | ✅ resolved 2026-06-23 |
@@ -114,7 +114,7 @@ backlog is product roadmap or live-infra wiring, not code gaps.
    `python scripts/digest_generator.py` → `python sms/send_sms.py --test`.
 
 ### Remaining backlog = roadmap (not blocking the pilot)
-- **ELN-012** province choropleth map · **ELN-016** end-to-end integration test (needs a
-  seeded test Postgres) · **ELN-018** Anthropic SDK refresh · **ELN-020** coverage
-  expansion (Visayas/Mindanao, more crops, Ilocano/Cebuano) · **ELN-021** outcome feedback
-  loop · **ELN-024** eslint v16 (dev-only, breaking).
+- **ELN-016** end-to-end integration test (needs a seeded test Postgres) · **ELN-018**
+  Anthropic SDK refresh · **ELN-020** coverage expansion (Visayas/Mindanao, more crops,
+  Ilocano/Cebuano) · **ELN-021** outcome feedback loop · **ELN-024** eslint v16 (dev-only,
+  breaking). (**ELN-012** map ✅ shipped.)

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Head from 'next/head'
 import { getLatestRiskScores, RiskScore } from '../lib/supabase'
 import ProvinceCard from '../components/ProvinceCard'
+import ProvinceMap from '../components/ProvinceMap'
 import RiskSummaryBar from '../components/RiskSummaryBar'
 
 const DISCLAIMER =
@@ -101,6 +102,11 @@ export default function Home() {
           {/* Summary bar */}
           {!loading && scores.length > 0 && (
             <RiskSummaryBar scores={scores} />
+          )}
+
+          {/* Risk map overview */}
+          {!loading && scores.length > 0 && (
+            <ProvinceMap scores={scores} />
           )}
 
           {/* Filters */}
