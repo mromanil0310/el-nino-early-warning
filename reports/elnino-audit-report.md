@@ -61,7 +61,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 | ELN-018 | Bump Anthropic SDK (0.34.2 → current); consider tool-based structured advisory | S | open |
 | ELN-019 | Supabase RLS — found read policies were `TO authenticated`, but the dashboard uses the **anon** key (no login) → anon reads returned zero rows. Migration 002 grants anon SELECT on the public-safe tables only; PII tables (`cooperative_contacts`, `sms_log`) stay service-role-only. | S | ✅ resolved 2026-06-23 |
 | ELN-020 | Coverage expansion: more provinces (Visayas/Mindanao), crops, localization (Ilocano/Cebuano) | L | open |
-| ELN-021 | Outcome feedback loop — did a warning lead to action / avoided loss? | L | open |
+| ELN-021 | Outcome feedback loop — **foundation done**: `advisory_feedback` table (migration 004) + pure `feedback.parse_feedback()` classifying EN/TL SMS replies (acted/not_acted/need_help/unknown) with tests. Remaining: inbound webhook to capture replies + a dashboard impact view. | L | 🔶 foundation 2026-06-23 |
 | ELN-022 | Dashboard `npm ci` failed with `Invalid Version:` — 21 corrupt optional-native-binding entries (`@unrs/resolver-binding-*`, no `version`) in `package-lock.json` (npm optional-dep bug). | S | ✅ resolved 2026-06-23 |
 | ELN-023 | `next@14.2.5` runtime security advisory — bumped to `14.2.35` (latest 14.2.x) + `eslint-config-next` to match; npm ci / tsc / build re-verified | S | ✅ resolved 2026-06-23 |
 | ELN-024 | Residual **dev-only** audit item: `@next/eslint-plugin-next` advisory (via `eslint-config-next`); fix is a breaking bump to v16. Lint tooling only — does not ship to users. Defer to a tooling upgrade. | XS | open (found during ELN-023) |
