@@ -2,6 +2,12 @@
 
 _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized backlog. Newest dated section is authoritative; older sections retained for history._
 
+> ## ✅ Pilot complete (`v1.0.0-pilot`)
+> Every defect and cleanly-completable feature is closed and CI-verified — pipeline,
+> dashboard, security/RLS, compliance (opt-out + feedback loop), tests, docs.
+> **Remaining = roadmap only:** ELN-018 (SDK refresh), ELN-020 (geographic/crop/language
+> expansion), ELN-024 (dev-only eslint v16). See the deployment checklist below to go live.
+
 > A weekly El Niño agricultural risk system for 15 Luzon provinces (PAGASA → risk score → Claude advisory → SMS). Because it warns farmers, **correctness and delivery reliability are the top priorities** — a silent failure or an under-stated risk has real-world cost.
 
 ---
