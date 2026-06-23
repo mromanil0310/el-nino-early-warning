@@ -33,6 +33,20 @@ def normalize_ph_phone(raw: str) -> str | None:
         return "+63" + subscriber
     return None
 
+
+def normalize_phone_set(rows: list[dict], field: str = "phone_number") -> set[str]:
+    """Build a set of E.164 numbers from rows (e.g. sms_opt_outs), skipping invalid ones.
+
+    Used to suppress opted-out recipients (ELN-010): both the opt-out list and each
+    contact's number are normalized the same way, so suppression is format-agnostic.
+    """
+    out: set[str] = set()
+    for r in rows:
+        normalized = normalize_ph_phone(r.get(field, ""))
+        if normalized:
+            out.add(normalized)
+    return out
+
 # Semaphore returns CAPITALIZED message statuses: Pending, Queued, Sent, Failed,
 # Refunded. The ones below (matched case-insensitively) mean the SMS will NOT be
 # delivered. "error" also covers the {"status": "error"} shape some failures use.

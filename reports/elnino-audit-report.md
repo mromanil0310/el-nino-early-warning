@@ -42,14 +42,14 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 | ELN-007 | Harden the Claude advisory parser (was truncating multi-line `ADVISORY_*` to first line) — pure `advisory.parse_advisory` captures values to the next label | M | ✅ resolved 2026-06-23 |
 | ELN-008 | Encoding-aware SMS | S | ✅ shipped |
 | ELN-009 | Phone E.164 normalization (`normalize_ph_phone`) before Semaphore; invalid numbers skipped | S | ✅ resolved 2026-06-23 |
-| ELN-010 | SMS opt-out / unsubscribe (consent / NTC compliance) | M | open |
+| ELN-010 | SMS opt-out / unsubscribe suppression — `sms_opt_outs` table (migration 003) + `normalize_phone_set` + send_sms skips opted-out numbers. (Inbound STOP→insert via a Semaphore webhook is the remaining ops wiring.) | M | ✅ resolved 2026-06-23 |
 
 ### P2 — Medium (quality / UX)
 | ID | Item | Effort | Status |
 |----|------|--------|--------|
 | ELN-011 | Distinct `early-vegetative`/`late-vegetative` `crop_stage` labels (SQL + `crop_stage.py` + schema.yml + tests) | S | ✅ resolved 2026-06-23 |
 | ELN-012 | Dashboard province map (choropleth — lat/lon already seeded) | M | open |
-| ELN-013 | Historical week-over-week trend chart per province | M | open |
+| ELN-013 | Historical trend sparkline per province — `Sparkline.tsx` (last 8 weeks) in the expanded card, using the existing `getHistoricalScores` query | M | ✅ resolved 2026-06-23 |
 | ELN-014 | dbt uniqueness test on `risk_scores` (`province_id,crop,week_of`) — singular test `assert_risk_scores_unique.sql` | S | ✅ resolved 2026-06-23 |
 | ELN-015 | Dev setup — `Makefile` + `pipeline/requirements-dev.txt` | S | ✅ resolved 2026-06-23 |
 | ELN-016 | Integration test of scrape→dbt→digest→SMS against a seeded test Postgres | M | open |
@@ -59,7 +59,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 |----|------|--------|--------|
 | ELN-017 | Remove hardcoded test phone number literal in `send_sms.py --test` (now env-only, normalized) | XS | ✅ resolved 2026-06-23 |
 | ELN-018 | Bump Anthropic SDK (0.34.2 → current); consider tool-based structured advisory | S | open |
-| ELN-019 | Verify/test Supabase RLS policies (anon read-only, service-key server-only) | S | open |
+| ELN-019 | Supabase RLS — found read policies were `TO authenticated`, but the dashboard uses the **anon** key (no login) → anon reads returned zero rows. Migration 002 grants anon SELECT on the public-safe tables only; PII tables (`cooperative_contacts`, `sms_log`) stay service-role-only. | S | ✅ resolved 2026-06-23 |
 | ELN-020 | Coverage expansion: more provinces (Visayas/Mindanao), crops, localization (Ilocano/Cebuano) | L | open |
 | ELN-021 | Outcome feedback loop — did a warning lead to action / avoided loss? | L | open |
 | ELN-022 | Dashboard `npm ci` failed with `Invalid Version:` — 21 corrupt optional-native-binding entries (`@unrs/resolver-binding-*`, no `version`) in `package-lock.json` (npm optional-dep bug). | S | ✅ resolved 2026-06-23 |
@@ -80,7 +80,8 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 **This session (2026-06-23):** ELN-001, 002, 003, 004, 006, 008 (see sprint table above).
 - **ELN-022** (post-push): regenerated `dashboard/package-lock.json` (clean reinstall) to remove 21 corrupt `@unrs/resolver-binding-*` entries that crashed `npm ci`. Dashboard now passes `npm ci` + `tsc --noEmit` + `next build` locally; the CI dashboard job is now **gating** (no longer `continue-on-error`).
 - **ELN-023**: bumped `next` 14.2.5 → 14.2.35 (security advisory).
-- **Batch (P1/P2/P3 close-out):** ELN-005 (trend-join first-run guard), ELN-007 (multi-line advisory parser), ELN-009 (E.164 phone normalization), ELN-011 (early/late vegetative labels), ELN-014 (dbt uniqueness test), ELN-015 (Makefile + requirements-dev), ELN-017 (env-only test phone). **76 unit tests passing.**
+- **Batch (P1/P2/P3 close-out):** ELN-005 (trend-join first-run guard), ELN-007 (multi-line advisory parser), ELN-009 (E.164 phone normalization), ELN-011 (early/late vegetative labels), ELN-014 (dbt uniqueness test), ELN-015 (Makefile + requirements-dev), ELN-017 (env-only test phone).
+- **Compliance/security/UX batch:** ELN-010 (SMS opt-out suppression + migration 003), ELN-019 (anon-read RLS migration 002 — fixed the empty-dashboard bug), ELN-013 (dashboard trend sparkline). **79 unit tests passing; dashboard `tsc` + build green.**
 
 ---
 

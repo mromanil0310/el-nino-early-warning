@@ -14,7 +14,9 @@ import sys
 
 # delivery.py is a pure module (no Supabase/requests), importable on its own.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "sms"))
-from delivery import is_successful_send, attach_digests, normalize_ph_phone  # noqa: E402
+from delivery import (  # noqa: E402
+    is_successful_send, attach_digests, normalize_ph_phone, normalize_phone_set,
+)
 
 
 class TestFailures:
@@ -101,3 +103,24 @@ class TestNormalizePhPhone:
     def test_landline_and_short_codes_rejected(self):
         assert normalize_ph_phone("0288881234") is None   # 02 landline, not mobile
         assert normalize_ph_phone("911") is None
+
+
+class TestNormalizePhoneSet:
+    def test_builds_normalized_set_skipping_invalid(self):
+        rows = [
+            {"phone_number": "09171234567"},
+            {"phone_number": "+639171234567"},   # duplicate of the first, different format
+            {"phone_number": "9991234567"},      # not 9-lead in CC sense? actually valid (starts 9)
+            {"phone_number": "invalid"},
+            {"phone_number": ""},
+        ]
+        out = normalize_phone_set(rows)
+        assert "+639171234567" in out
+        assert "+639991234567" in out
+        assert len(out) == 2  # the two distinct valid numbers; invalids dropped
+
+    def test_custom_field_name(self):
+        assert normalize_phone_set([{"num": "09171234567"}], field="num") == {"+639171234567"}
+
+    def test_empty(self):
+        assert normalize_phone_set([]) == set()

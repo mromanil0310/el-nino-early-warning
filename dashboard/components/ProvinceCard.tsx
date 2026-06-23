@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { RiskScore, WeeklyDigest, getDigestForProvince } from '../lib/supabase'
+import { RiskScore, WeeklyDigest, getDigestForProvince, getHistoricalScores } from '../lib/supabase'
 import RiskBadge from './RiskBadge'
 import TrendIcon from './TrendIcon'
+import Sparkline from './Sparkline'
 
 interface ProvinceCardProps {
   score: RiskScore
@@ -9,6 +10,7 @@ interface ProvinceCardProps {
 
 export default function ProvinceCard({ score }: ProvinceCardProps) {
   const [digest, setDigest] = useState<WeeklyDigest | null>(null)
+  const [history, setHistory] = useState<number[]>([])
   const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [lang, setLang] = useState<'en' | 'tl'>('en')
@@ -19,8 +21,12 @@ export default function ProvinceCard({ score }: ProvinceCardProps) {
   async function handleExpand() {
     if (!expanded && !digest) {
       setLoading(true)
-      const d = await getDigestForProvince(score.province_id, score.week_of)
+      const [d, hist] = await Promise.all([
+        getDigestForProvince(score.province_id, score.week_of),
+        getHistoricalScores(score.province_id, score.crop, 8),
+      ])
       setDigest(d)
+      setHistory(hist.map((h) => h.risk_score).reverse()) // oldest → newest
       setLoading(false)
     }
     setExpanded((prev) => !prev)
@@ -66,6 +72,15 @@ export default function ProvinceCard({ score }: ProvinceCardProps) {
       {expanded && (
         <div className="mt-3 rounded border border-gray-200 bg-white p-3">
           {loading && <p className="text-xs text-gray-400">Loading advisory…</p>}
+
+          {!loading && history.length >= 2 && (
+            <div className="mb-3">
+              <p className="text-xs font-medium text-gray-500 mb-1">
+                Risk trend · last {history.length} weeks
+              </p>
+              <Sparkline values={history} />
+            </div>
+          )}
           {!loading && !digest && (
             <p className="text-xs text-gray-400 italic">No advisory generated for this province yet.</p>
           )}

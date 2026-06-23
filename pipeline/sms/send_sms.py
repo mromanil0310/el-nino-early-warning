@@ -34,9 +34,9 @@ DRY_RUN = os.getenv("SMS_DRY_RUN", "false").lower() == "true"
 # Pure delivery-status logic lives in delivery.py (no I/O) so it can be unit-tested.
 # Robust import: works both run-as-script and imported as `sms.send_sms` (Airflow).
 try:
-    from delivery import is_successful_send, attach_digests, normalize_ph_phone
+    from delivery import is_successful_send, attach_digests, normalize_ph_phone, normalize_phone_set
 except ImportError:  # pragma: no cover - import path differs under Airflow
-    from sms.delivery import is_successful_send, attach_digests, normalize_ph_phone
+    from sms.delivery import is_successful_send, attach_digests, normalize_ph_phone, normalize_phone_set
 
 # retry_util lives in ../scripts — make it importable whether run as a script or package.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
@@ -142,6 +142,16 @@ def run(week_of: date | None = None) -> int:
         log.info("No contacts to send to this week")
         return 0
 
+    # ELN-010: suppress opted-out recipients (consent compliance).
+    try:
+        opt_out_rows = supabase.table("sms_opt_outs").select("phone_number").execute().data or []
+    except Exception as e:
+        log.warning(f"Could not load sms_opt_outs (sending to all): {e}")
+        opt_out_rows = []
+    opted_out = normalize_phone_set(opt_out_rows)
+    if opted_out:
+        log.info(f"Loaded {len(opted_out)} opted-out number(s) to suppress")
+
     sent = 0
     for contact in contacts:
         digest = contact.get("digest", {})
@@ -155,6 +165,9 @@ def run(week_of: date | None = None) -> int:
         province_name = (contact.get("provinces") or {}).get("name", "Unknown")
         if not phone:
             log.warning(f"  Skipping {contact['contact_name']} ({province_name}): invalid phone {raw_phone!r}")
+            continue
+        if phone in opted_out:
+            log.info(f"  Skipping {contact['contact_name']} ({province_name}): opted out")
             continue
         log.info(f"  Sending to {contact['contact_name']} ({province_name}) → {phone}")
 
