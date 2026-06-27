@@ -1,0 +1,30 @@
+# El Niño Early Warning — Pipeline runtime dependencies (GitHub Actions)
+# Excludes: apache-airflow (GitHub Actions IS the scheduler), flask (webhook-only)
+# Install with: pip install -r pipeline/requirements-pipeline.txt
+
+# dbt (Supabase = Postgres)
+dbt-core==1.8.6
+dbt-postgres==1.8.2
+
+# Supabase Python client
+supabase==2.7.4
+
+# PDF parsing (PAGASA bulletins)
+pdfplumber==0.11.4
+pypdf2==3.0.1
+
+# AI advisory generation
+anthropic==0.34.2
+
+# HTTP client
+requests==2.32.3
+
+# Data processing
+pandas==2.2.3
+numpy==1.26.4
+
+# Environment management
+python-dotenv==1.0.1
+
+# Retry logic
+tenacity==9.0.0

@@ -1,0 +1,84 @@
+name: Weekly El Niño Pipeline
+
+# Runs every Monday at 06:00 PHT (22:00 UTC Sunday)
+# Can also be triggered manually from the Actions tab
+on:
+  schedule:
+    - cron: "0 22 * * 0"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run — skip SMS send (true/false)"
+        required: false
+        default: "false"
+
+jobs:
+  pipeline:
+    name: Run weekly advisory pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+      SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_DB_NAME: postgres
+      SUPABASE_DB_PORT: "5432"
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      SEMAPHORE_API_KEY: ${{ secrets.SEMAPHORE_API_KEY }}
+      PIPELINE_DIR: ${{ github.workspace }}/pipeline
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pipeline/requirements-pipeline.txt
+
+      - name: Install dependencies
+        run: pip install -r pipeline/requirements-pipeline.txt
+
+      # ── Step 1: Fetch PAGASA seasonal forecast ──────────────────────────────
+      - name: Scrape PAGASA forecast
+        run: python pipeline/scripts/pagasa_scraper.py
+        env:
+          PAGASA_FAIL_ON_STALE: "true"
+
+      # ── Step 2: Run dbt risk score models ──────────────────────────────────
+      - name: Run dbt models
+        working-directory: pipeline
+        run: |
+          dbt deps --profiles-dir . --project-dir .
+          dbt run --profiles-dir . --project-dir . --target prod
+          dbt test --profiles-dir . --project-dir . --target prod
+
+      # ── Step 3: Generate AI advisories ──────────────────────────────────────
+      - name: Generate weekly advisories
+        run: python pipeline/scripts/digest_generator.py
+
+      # ── Step 4: Send SMS (skip if dry run) ──────────────────────────────────
+      - name: Send SMS advisories
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: python pipeline/sms/send_sms.py
+
+      # ── Step 5: Trigger Vercel dashboard rebuild ─────────────────────────────
+      - name: Rebuild dashboard
+        if: ${{ secrets.VERCEL_DEPLOY_HOOK_URL != '' }}
+        run: |
+          curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"
+
+      # ── Notify on failure ────────────────────────────────────────────────────
+      - name: Alert on failure
+        if: failure()
+        run: |
+          if [ -n "${{ secrets.OPS_ALERT_WEBHOOK_URL }}" ]; then
+            curl -X POST "${{ secrets.OPS_ALERT_WEBHOOK_URL }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"text\": \"ALERT: El Niño weekly pipeline FAILED on run ${{ github.run_id }}. Advisories may not have been sent. Check: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          fi
