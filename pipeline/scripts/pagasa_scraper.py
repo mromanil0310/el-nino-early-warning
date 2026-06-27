@@ -14,6 +14,7 @@ The bulletin is a PDF. This scraper:
 Run manually or via Airflow (see dags/elnino_weekly.py).
 """
 
+import io
 import os
 import re
 import logging
@@ -116,7 +117,7 @@ def parse_outlook_from_pdf(pdf_bytes: bytes) -> dict[str, dict]:
     full_text = ""
 
     try:
-        with pdfplumber.open(pdf_bytes if isinstance(pdf_bytes, bytes) else pdf_bytes) as pdf:
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
             for page in pdf.pages:
                 text = page.extract_text() or ""
                 full_text += text.lower() + "\n"
@@ -167,7 +168,7 @@ def parse_outlook_from_pdf(pdf_bytes: bytes) -> dict[str, dict]:
 
 # ELN-004: the built-in fallback below is a fixed baseline — it does NOT track new
 # PAGASA bulletins. Flag it as stale so the pipeline never silently scores on old data.
-MANUAL_OVERRIDE_AS_OF = date(2026, 4, 1)   # PAGASA El Niño Watch, April 2026
+MANUAL_OVERRIDE_AS_OF = date(2026, 6, 1)   # PAGASA baseline, June 2026
 MANUAL_OVERRIDE_MAX_AGE_DAYS = 45          # PAGASA refreshes seasonal outlooks ~monthly
 
 
