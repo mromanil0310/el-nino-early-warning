@@ -1,12 +1,30 @@
 # El Niño Early Warning — Audit & Backlog Report
 
-_Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized backlog. Newest dated section is authoritative; older sections retained for history._
+_Last updated: 2026-07-08. Source of truth for bugs, fixes, and the prioritized backlog. Newest dated section is authoritative; older sections retained for history._
 
-> ## ✅ Pilot complete (`v1.0.0-pilot`)
+> ## ✅ Pilot complete (`v1.0.0-pilot`) — Phase 2 started 2026-07-08
 > Every defect and cleanly-completable feature is closed and CI-verified — pipeline,
 > dashboard, security/RLS, compliance (opt-out + feedback loop), tests, docs.
-> **Remaining = roadmap only:** ELN-018 (SDK refresh), ELN-020 (geographic/crop/language
-> expansion), ELN-024 (dev-only eslint v16). See the deployment checklist below to go live.
+> **Remaining = roadmap only:** ELN-020 (geographic/crop/language expansion),
+> ELN-024 (dev-only eslint v16), Phase 2 Builds 3–5 (province-station model,
+> FastAPI DA endpoint, monthly PDF report — see the Phase 2 blueprint).
+> See the deployment checklist below to go live.
+
+---
+
+## 🏁 Sprint — 2026-07-08 (Phase 2 Builds 1–2)
+
+Per the 2026-07-05 Phase 2 architecture blueprint (Builder Handoff):
+
+| ID | Item | Status | Verification |
+|----|------|--------|-------------|
+| **ELN-025** | Inbound webhook HMAC signature validation (Phase 2 Build 1) — new pure `pipeline/webhook/signature.py` (`verify_semaphore_signature`, timing-safe `hmac.compare_digest`) wired into `inbound.py`; 403 on missing/invalid signature when `SEMAPHORE_WEBHOOK_SECRET` is set, loud warning + skip when unset (dev). Deploy step: set `SEMAPHORE_WEBHOOK_SECRET` in the Railway webhook service **and** Semaphore account → Inbound Webhook → Signature Secret. | ✅ | 9 new unit tests (`test_webhook_signature.py`); `py_compile` clean. |
+| **ELN-018** | Anthropic SDK bump 0.34.2 → **0.116.0** (Phase 2 Build 2) | ✅ (review) | Call site uses stable `messages.create` + `APIConnectionError`/`RateLimitError`/`InternalServerError` — all unchanged in current SDK. SDK not installed locally, so reviewed + compiled, not executed; verify with one live `digest_generator.py` run on deploy. |
+| **ELN-026** | Phase 2 Build 3 data groundwork — province-station model + national province seed | ✅ (partial — see remaining) | (a) `provinces.csv` expanded 15 → **82 provinces** (pilot rows 1–15 byte-identical; PSGC names, approx. centroids). (b) New `pagasa_stations.csv` — **57 operational synoptic stations**, compiled 2026-07-08 from DOST-PAGASA Synoptic Station Profile 2024 (Southern Luzon + Mindanao PRSD) and the PRSD station directory. (c) New `province_station_mapping.csv` — 108 weighted mappings, full coverage, weights sum to 1.0/province (validated offline). (d) Migration `006_province_station_mapping.sql` (integer FKs to match live schema — blueprint sketch used UUIDs; anon-read RLS per 002 pattern). (e) dbt seed tests + singular tests `assert_station_weights_sum_to_one` / `assert_all_provinces_mapped` / `assert_province_count` (82). (f) **Scraper correctness fix:** `PROVINCE_ID_MAP` now generated from the seed CSV (no drift) via new pure `provinces_map.py`, with containment-aware matching — "South Cotabato" / "Quezon City" / "Northern Samar" text can no longer mis-populate Cotabato / Quezon / Samar; PAGASA aliases (Western Samar, North Cotabato, Compostela Valley, Mt. Province) resolve. 10 new unit tests. |
+
+**Test status:** **110 unit tests passing (+3 skipped DB smoke).**
+
+**Build 3 remaining (deliberately NOT fabricated):** `crop_calendars.csv` still covers the 15 pilot provinces. Planting windows for the 67 new provinces must come from PSA Open Stat / DA regional calendars — wrong windows would produce wrong farmer advisories, so this needs source data, not invention. Until then the pipeline safely scores only calendared provinces (staging inner-join excludes the rest), and the "all 82 provinces have risk scores per run" dbt test is deferred with it. The weighted station→province dbt join (risk model) also lands with that work.
 
 > A weekly El Niño agricultural risk system for 15 Luzon provinces (PAGASA → risk score → Claude advisory → SMS). Because it warns farmers, **correctness and delivery reliability are the top priorities** — a silent failure or an under-stated risk has real-world cost.
 
@@ -64,7 +82,7 @@ _Last updated: 2026-06-23. Source of truth for bugs, fixes, and the prioritized 
 | ID | Item | Effort | Status |
 |----|------|--------|--------|
 | ELN-017 | Remove hardcoded test phone number literal in `send_sms.py --test` (now env-only, normalized) | XS | ✅ resolved 2026-06-23 |
-| ELN-018 | Bump Anthropic SDK (0.34.2 → current); consider tool-based structured advisory | S | open |
+| ELN-018 | Bump Anthropic SDK (0.34.2 → 0.116.0) — tool-based structured advisory deferred to a later pass | S | ✅ resolved 2026-07-08 |
 | ELN-019 | Supabase RLS — found read policies were `TO authenticated`, but the dashboard uses the **anon** key (no login) → anon reads returned zero rows. Migration 002 grants anon SELECT on the public-safe tables only; PII tables (`cooperative_contacts`, `sms_log`) stay service-role-only. | S | ✅ resolved 2026-06-23 |
 | ELN-020 | Coverage expansion: more provinces (Visayas/Mindanao), crops, localization (Ilocano/Cebuano) | L | open |
 | ELN-021 | Outcome feedback loop — end to end: `advisory_feedback` (mig 004) + `feedback.parse_feedback`/`classify_inbound` + inbound webhook + anon-safe `feedback_summary` view (mig 005) + dashboard `FeedbackSummary.tsx` impact panel | L | ✅ resolved 2026-06-23 |

@@ -71,3 +71,44 @@ models:
           - accepted_values:
               values: [0.0, 0.25, 0.75, 1.0]
               quote: false
+
+# Seed tests — PAGASA station registry + province-station mapping (Phase 2 Build 3).
+# Weight-sum and full-coverage invariants live in the singular tests
+# assert_station_weights_sum_to_one.sql / assert_all_provinces_mapped.sql /
+# assert_province_count.sql.
+seeds:
+  - name: pagasa_stations
+    description: "PAGASA operational synoptic station registry (DOST-PAGASA Synoptic Station Profile 2024 + PRSD directory, compiled 2026-07-08)."
+    columns:
+      - name: id
+        tests: [unique, not_null]
+      - name: station_code
+        tests: [unique, not_null]
+      - name: name
+        tests: [not_null]
+
+  - name: province_station_mapping
+    description: "Weighted station→province assignment for the seasonal outlook. Weights per province sum to 1.0."
+    columns:
+      - name: province_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('provinces')
+              field: id
+      - name: station_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('pagasa_stations')
+              field: id
+      - name: weight
+        tests: [not_null]
+
+  - name: provinces
+    description: "All 82 Philippine provinces (PSGC); is_pilot marks the original 15 Luzon pilot provinces."
+    columns:
+      - name: id
+        tests: [unique, not_null]
+      - name: name
+        tests: [unique, not_null]

@@ -14,3 +14,70 @@ id,name,region_code,pagasa_zone,lat,lon,is_pilot
 13,Quezon,IV-A,Zone 3,14.0313,122.1116,true
 14,Benguet,CAR,Zone 1,16.4023,120.5960,true
 15,Mountain Province,CAR,Zone 1,17.0000,121.0000,true
+16,Abra,CAR,Zone 1,17.5951,120.7983,false
+17,Apayao,CAR,Zone 1,18.0121,121.1710,false
+18,Ifugao,CAR,Zone 1,16.8331,121.1000,false
+19,Kalinga,CAR,Zone 1,17.4740,121.3542,false
+20,Batanes,II,Zone 3,20.4487,121.9702,false
+21,Cagayan,II,Zone 3,18.2489,121.8787,false
+22,Isabela,II,Zone 3,16.9754,121.8107,false
+23,Nueva Vizcaya,II,Zone 2,16.3301,121.0938,false
+24,Quirino,II,Zone 3,16.2700,121.5370,false
+25,Aurora,III,Zone 3,15.7583,121.5561,false
+26,Cavite,IV-A,Zone 2,14.4791,120.8970,false
+27,Rizal,IV-A,Zone 2,14.6037,121.3084,false
+28,Marinduque,MIMAROPA,Zone 4,13.4767,121.9032,false
+29,Occidental Mindoro,MIMAROPA,Zone 4,13.1024,120.7651,false
+30,Oriental Mindoro,MIMAROPA,Zone 4,13.4117,121.1803,false
+31,Palawan,MIMAROPA,Zone 4,9.7392,118.7353,false
+32,Romblon,MIMAROPA,Zone 4,12.5778,122.2695,false
+33,Albay,V,Zone 3,13.1391,123.7438,false
+34,Camarines Norte,V,Zone 3,14.1122,122.9553,false
+35,Camarines Sur,V,Zone 3,13.6252,123.1948,false
+36,Catanduanes,V,Zone 3,13.5842,124.2340,false
+37,Masbate,V,Zone 4,12.3700,123.6210,false
+38,Sorsogon,V,Zone 3,12.9927,124.0147,false
+39,Aklan,VI,Zone 4,11.7086,122.3648,false
+40,Antique,VI,Zone 4,11.3700,122.0600,false
+41,Capiz,VI,Zone 4,11.5853,122.7511,false
+42,Guimaras,VI,Zone 4,10.5928,122.6325,false
+43,Iloilo,VI,Zone 4,10.7202,122.5621,false
+44,Negros Occidental,VI,Zone 4,10.6407,122.9689,false
+45,Bohol,VII,Zone 4,9.6475,123.8556,false
+46,Cebu,VII,Zone 4,10.3157,123.8854,false
+47,Negros Oriental,VII,Zone 4,9.3068,123.3054,false
+48,Siquijor,VII,Zone 4,9.2137,123.5150,false
+49,Biliran,VIII,Zone 3,11.5836,124.4651,false
+50,Eastern Samar,VIII,Zone 3,11.6508,125.4082,false
+51,Leyte,VIII,Zone 3,11.2433,125.0039,false
+52,Northern Samar,VIII,Zone 3,12.4989,124.6377,false
+53,Samar,VIII,Zone 3,11.7753,124.8861,false
+54,Southern Leyte,VIII,Zone 3,10.1335,125.0021,false
+55,Zamboanga del Norte,IX,Zone 5,8.5886,123.3409,false
+56,Zamboanga del Sur,IX,Zone 5,7.8383,123.4370,false
+57,Zamboanga Sibugay,IX,Zone 5,7.7061,122.5897,false
+58,Bukidnon,X,Zone 5,8.1575,125.1278,false
+59,Camiguin,X,Zone 5,9.1732,124.7299,false
+60,Lanao del Norte,X,Zone 5,8.0034,123.9695,false
+61,Misamis Occidental,X,Zone 5,8.5046,123.8426,false
+62,Misamis Oriental,X,Zone 5,8.4542,124.6319,false
+63,Davao de Oro,XI,Zone 5,7.5615,126.0459,false
+64,Davao del Norte,XI,Zone 5,7.4472,125.8028,false
+65,Davao del Sur,XI,Zone 5,6.7663,125.3284,false
+66,Davao Occidental,XI,Zone 5,6.0941,125.6095,false
+67,Davao Oriental,XI,Zone 5,6.9689,126.2159,false
+68,Cotabato,XII,Zone 5,7.1436,124.8511,false
+69,Sarangani,XII,Zone 5,5.9630,125.1990,false
+70,South Cotabato,XII,Zone 5,6.3372,124.7742,false
+71,Sultan Kudarat,XII,Zone 5,6.5069,124.4198,false
+72,Agusan del Norte,XIII,Zone 5,8.9456,125.5319,false
+73,Agusan del Sur,XIII,Zone 5,8.4467,125.7325,false
+74,Dinagat Islands,XIII,Zone 5,10.1282,125.6094,false
+75,Surigao del Norte,XIII,Zone 5,9.7842,125.4915,false
+76,Surigao del Sur,XIII,Zone 5,8.7512,126.1378,false
+77,Basilan,BARMM,Zone 5,6.5407,122.0839,false
+78,Lanao del Sur,BARMM,Zone 5,7.8232,124.4357,false
+79,Maguindanao del Norte,BARMM,Zone 5,7.1450,124.4380,false
+80,Maguindanao del Sur,BARMM,Zone 5,6.9550,124.6300,false
+81,Sulu,BARMM,Zone 5,6.0500,121.0000,false
+82,Tawi-Tawi,BARMM,Zone 5,5.1339,119.9509,false

@@ -7,10 +7,10 @@ sources:
     schema: public
     tables:
       - name: provinces
-        description: "15 pilot provinces (Luzon). Seeded from provinces.csv."
+        description: "All 82 Philippine provinces (15 Luzon pilot + national expansion, Phase 2 Build 3). Seeded from provinces.csv."
         columns:
           - name: id
-            description: "Province ID (1–15)"
+            description: "Province ID (1–82; 1–15 are the pilot)"
             tests:
               - unique
               - not_null
@@ -27,7 +27,7 @@ sources:
           - name: lon
             description: "Province centroid longitude"
           - name: is_pilot
-            description: "True for all 15 pilot provinces"
+            description: "True for the original 15 Luzon pilot provinces"
 
       - name: pagasa_forecasts
         description: "PAGASA seasonal rainfall outlook per province, updated weekly by pagasa_scraper.py"

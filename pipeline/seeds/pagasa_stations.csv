@@ -1,0 +1,58 @@
+id,station_code,name,lat,lon,region_code
+1,LAOAG,Laoag City Synoptic Station,18.1780,120.5320,I
+2,SINAIT,Sinait Synoptic Station,17.8670,120.4580,I
+3,DAGUPAN,Dagupan City Synoptic Station,16.0860,120.3530,I
+4,BAGUIO,Baguio City Synoptic Station,16.4050,120.5960,CAR
+5,TUGUEGARAO,Tuguegarao City Synoptic Station,17.6120,121.7290,II
+6,APARRI,Aparri Synoptic Station,18.3600,121.6300,II
+7,CALAYAN,Calayan Synoptic Station,19.2600,121.4700,II
+8,BASCO,Basco Radar Synoptic Station,20.4480,121.9700,II
+9,ITBAYAT,Itbayat Synoptic Station,20.7880,121.8430,II
+10,BALER,Baler Radar Synoptic Station,15.7600,121.5660,III
+11,CASIGURAN,Casiguran Synoptic Station,16.2780,122.1160,III
+12,CABANATUAN,Cabanatuan Synoptic Station,15.4780,120.9600,III
+13,SANILDEFONSO,San Ildefonso Synoptic Station,15.0790,120.9420,III
+14,CLARK,Clark Airport Synoptic Station,15.1860,120.5600,III
+15,IBA,Iba Synoptic Station,15.3270,119.9660,III
+16,CUBI,Cubi Pt. Synoptic Station,14.7940,120.2710,III
+17,SCIGARDEN,Science Garden Synoptic Station,14.6450,121.0440,NCR
+18,PORTAREA,Port Area Synoptic Station,14.5880,120.9680,NCR
+19,NAIA,NAIA Synoptic Station,14.5090,121.0200,NCR
+20,SANGLEY,Sangley Point Synoptic Station,14.4950,120.9030,IV-A
+21,AMBULONG,Ambulong Synoptic Station,14.0880,121.0550,IV-A
+22,TANAY,Tanay Synoptic Station,14.5830,121.3690,IV-A
+23,TAYABAS,Tayabas City Synoptic Station,14.0260,121.5930,IV-A
+24,INFANTA,Infanta Synoptic Station,14.7500,121.6500,IV-A
+25,ALABAT,Alabat Synoptic Station,14.1000,122.0170,IV-A
+26,CALAPAN,Calapan Synoptic Station,13.4120,121.1800,MIMAROPA
+27,SANJOSE,San Jose Synoptic Station,12.3610,121.0470,MIMAROPA
+28,ROMBLON,Romblon Synoptic Station,12.5780,122.2700,MIMAROPA
+29,CORON,Coron Synoptic Station,12.0040,120.2040,MIMAROPA
+30,PPRINCESA,Puerto Princesa City Synoptic Station,9.7420,118.7590,MIMAROPA
+31,CUYO,Cuyo Synoptic Station,10.8580,121.0080,MIMAROPA
+32,DAET,Daet Synoptic Station,14.1290,122.9800,V
+33,LEGAZPI,Legazpi City Synoptic Station,13.1330,123.7350,V
+34,VIRAC,Virac Synoptic Station,13.5760,124.2090,V
+35,JUBAN,Juban Synoptic Station,12.8470,123.9890,V
+36,MASBATE,Masbate Synoptic Station,12.3670,123.6290,V
+37,ROXAS,Roxas City Synoptic Station,11.5850,122.7510,VI
+38,ILOILO,Iloilo Synoptic Station,10.7130,122.5450,VI
+39,MACTAN,Mactan Intl Airport Synoptic Station,10.3080,123.9790,VII
+40,DUMAGUETE,Dumaguete City Synoptic Station,9.3070,123.3050,VII
+41,TAGBILARAN,Tagbilaran City Synoptic Station,9.6640,123.8530,VII
+42,CATARMAN,Catarman Synoptic Station,12.4990,124.6360,VIII
+43,CATBALOGAN,Catbalogan City Synoptic Station,11.7750,124.8860,VIII
+44,BORONGAN,Borongan Synoptic Station,11.6080,125.4320,VIII
+45,GUIUAN,Guiuan Synoptic Station,11.0350,125.7420,VIII
+46,TACLOBAN,Tacloban City Synoptic Station,11.2280,125.0280,VIII
+47,MAASIN,Maasin Synoptic Station,10.1330,124.8370,VIII
+48,DIPOLOG,Dipolog City Synoptic Station,8.6010,123.3340,IX
+49,ZAMBOANGA,Zamboanga Synoptic Station,6.9220,122.0600,IX
+50,LAGUINDINGAN,Laguindingan Synoptic Station,8.6120,124.4560,X
+51,MALAYBALAY,Malaybalay Synoptic Station,8.1530,125.1320,X
+52,BUTUAN,Butuan City Synoptic Station,8.9510,125.4790,XIII
+53,SURIGAO,Surigao Synoptic Station,9.7990,125.4970,XIII
+54,HINATUAN,Hinatuan Synoptic Station,8.3680,126.3370,XIII
+55,COTABATO,Cotabato City Synoptic Station,7.1650,124.2100,BARMM
+56,DAVAO,Davao City Synoptic Station,7.1250,125.6460,XI
+57,GENSAN,General Santos Synoptic Station,6.1060,125.2350,XII

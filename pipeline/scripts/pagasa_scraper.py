@@ -51,24 +51,13 @@ except ImportError:  # pragma: no cover - import path differs under Airflow
     from scripts.outlook import OUTLOOK_TO_ANOMALY, OUTLOOK_NORMALIZATION, match_outlook
     from scripts.retry_util import retry_call
 
-# Pilot province names → province_id mapping (must match provinces table)
-PROVINCE_ID_MAP: dict[str, int] = {
-    "pangasinan": 1,
-    "ilocos norte": 2,
-    "ilocos sur": 3,
-    "la union": 4,
-    "nueva ecija": 5,
-    "tarlac": 6,
-    "pampanga": 7,
-    "bulacan": 8,
-    "zambales": 9,
-    "bataan": 10,
-    "laguna": 11,
-    "batangas": 12,
-    "quezon": 13,
-    "benguet": 14,
-    "mountain province": 15,
-}
+# Province names → province_id, generated from the canonical seed CSV (all 82
+# provinces + PAGASA aliases). Containment-aware matching prevents "south cotabato"
+# text from populating (North) Cotabato, etc. (Phase 2 Build 3.)
+try:
+    from provinces_map import PROVINCE_ID_MAP, find_all_province_in_text, find_province_in_text
+except ImportError:  # pragma: no cover - import path differs under Airflow
+    from scripts.provinces_map import PROVINCE_ID_MAP, find_all_province_in_text, find_province_in_text
 
 
 def download_pagasa_pdf(url: str) -> bytes | None:
@@ -131,7 +120,7 @@ def parse_outlook_from_pdf(pdf_bytes: bytes) -> dict[str, dict]:
                             continue
                         row_text = " ".join(str(c) for c in row if c).lower()
                         for prov_name in PROVINCE_ID_MAP:
-                            if prov_name in row_text:
+                            if find_province_in_text(prov_name, row_text) is not None:
                                 # match_outlook checks the most specific label first, so
                                 # "much below normal" is never mis-read as "below normal".
                                 matched = match_outlook(row_text)
@@ -145,22 +134,29 @@ def parse_outlook_from_pdf(pdf_bytes: bytes) -> dict[str, dict]:
     except Exception as e:
         log.error(f"PDF parse error: {e}")
 
-    # Text-based fallback: search for province name + outlook keyword pairs
+    # Text-based fallback: search for province name + outlook keyword pairs.
+    # find_province_in_text is containment-aware (a "south cotabato" mention never
+    # anchors plain "cotabato"); the outlook keyword must appear within 200 chars
+    # after the standalone province mention. Alternation is ordered most-specific
+    # first so "much below normal" is captured whole, never as "below normal".
     for prov_name in PROVINCE_ID_MAP:
         if prov_name in results:
             continue  # already found in table
-        # Look for province name within 200 chars of an outlook keyword. Alternation is
-        # ordered most-specific first so "much below normal" is captured whole, never as
-        # the shorter "below normal".
-        pattern = rf"{re.escape(prov_name)}.{{0,200}}?(much below normal|much above normal|below normal|above normal|near normal)"
-        match = re.search(pattern, full_text, re.DOTALL)
-        if match:
-            outlook = match.group(1)
-            results[prov_name] = {
-                "seasonal_outlook": outlook.title(),
-                "rainfall_anomaly_pct": OUTLOOK_TO_ANOMALY[outlook],
-                "raw_text": match.group(0)[:500],
-            }
+        for pos in find_all_province_in_text(prov_name, full_text):
+            window = full_text[pos : pos + len(prov_name) + 200]
+            match = re.search(
+                r"(much below normal|much above normal|below normal|above normal|near normal)",
+                window,
+                re.DOTALL,
+            )
+            if match:
+                outlook = match.group(1)
+                results[prov_name] = {
+                    "seasonal_outlook": outlook.title(),
+                    "rainfall_anomaly_pct": OUTLOOK_TO_ANOMALY[outlook],
+                    "raw_text": window[: match.end()][:500],
+                }
+                break
 
     log.info(f"Parsed outlook for {len(results)} provinces from PDF")
     return results
