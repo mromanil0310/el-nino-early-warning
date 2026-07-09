@@ -17,7 +17,7 @@ pdfplumber==0.11.4
 pypdf2==3.0.1  # fallback
 
 # AI advisory generation
-anthropic==0.34.2
+anthropic==0.116.0  # ELN-018 — messages.create + APIConnectionError/RateLimitError/InternalServerError unchanged
 
 # HTTP client
 requests==2.32.3

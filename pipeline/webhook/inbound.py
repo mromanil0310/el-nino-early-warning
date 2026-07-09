@@ -11,7 +11,9 @@ Semaphore inbound webhook at `POST /sms/inbound`. It reuses the SAME pure logic 
 weekly pipeline — feedback.classify_inbound + delivery.normalize_ph_phone — so there is
 no parallel re-implementation to drift.
 
-Env: SUPABASE_URL, SUPABASE_SERVICE_KEY, PORT (optional).
+Env: SUPABASE_URL, SUPABASE_SERVICE_KEY, PORT (optional),
+SEMAPHORE_WEBHOOK_SECRET (optional — enables HMAC signature validation; set the
+same value in Semaphore account settings → Inbound Webhook → Signature Secret).
 """
 
 import logging
@@ -19,13 +21,14 @@ import os
 import sys
 from datetime import date
 
-from flask import Flask, jsonify, request
+from flask import Flask, abort, jsonify, request
 from supabase import create_client
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sms"))
 from feedback import classify_inbound  # noqa: E402
 from delivery import normalize_ph_phone  # noqa: E402
+from signature import verify_semaphore_signature  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -44,6 +47,15 @@ def _field(data: dict, *names: str) -> str:
 
 @app.post("/sms/inbound")
 def inbound():
+    secret = os.environ.get("SEMAPHORE_WEBHOOK_SECRET", "")
+    if not secret:
+        log.warning("inbound: SEMAPHORE_WEBHOOK_SECRET not set — signature validation skipped")
+    elif not verify_semaphore_signature(
+        request.get_data(), request.headers.get("X-Semaphore-Signature", ""), secret
+    ):
+        log.warning("inbound: rejected POST with missing/invalid signature")
+        abort(403)
+
     data = request.form.to_dict() or request.get_json(silent=True) or {}
     raw_phone = _field(data, "sender", "number", "from")
     message = _field(data, "message", "text", "body")
