@@ -24,6 +24,20 @@ Per the 2026-07-05 Phase 2 architecture blueprint (Builder Handoff):
 
 **Test status:** **110 unit tests passing (+3 skipped DB smoke).**
 
+### Dashboard product pass — 2026-07-11 (ELN-027)
+
+Full product/UX/a11y/engineering audit + improvement pass on the Next.js dashboard (improve, not rewrite). Verified live in-browser (error path against the unconfigured backend; happy path with stubbed REST responses; mobile 375px).
+
+| Area | What shipped |
+|------|--------------|
+| **Reliability (critical fix)** | Query errors were swallowed into `[]`, so an outage rendered as "No risk scores available yet" — a silent failure on a warning tool. Queries now throw; the page shows the cause + a Try again button. Also fixed: white-screen crash on missing env vars (visible config message instead), null crash on `rainfall_anomaly_pct.toFixed()`. |
+| **UX** | Skeleton loaders; distinct empty/error/no-match states with recovery actions; human dates (`<time>`); map dots + ranked rows are clickable/focusable and filter the card list; **CSV export** of filtered rows (bridge until the Phase 2 API); EN/TL advisory choice persists via localStorage; search clear button; dynamic "N provinces monitored" (82-ready, no hardcoded "15"). |
+| **Accessibility** | `<html lang>` via new `_document`; aria-pressed/expanded/controls/live/alert/status; focus-visible rings; `lang="fil"` on Filipino text; contrast fixes (gray-400 → 500+). |
+| **Engineering** | `.eslintrc.json` (lint now configured + clean); `vercel.json` security headers (static export can't use next.config headers); SVG favicon (was 404); `lib/format.ts` (date/CSV utils); typed feedback rows, no `any`; preconnect to Supabase; removed empty `pages/api/` scaffold. Gates: tsc + ESLint + `next build` green (148 kB first load). |
+| **Environment fix** | `dashboard/node_modules` had 1,015 file-sync-corrupted duplicate entries (`react 4`, `node 4`, …) that silently broke React hydration on `/` (no console errors). Clean `npm ci` fixed it. Same corruption pattern as `out/404 2.html` — watch for it elsewhere in synced folders. |
+
+**Known gap:** `dashboard/.env.local` points at a placeholder Supabase URL — the dashboard has never run against real data locally. Set real values when deploying Phase 1.
+
 **Build 3 remaining (deliberately NOT fabricated):** `crop_calendars.csv` still covers the 15 pilot provinces. Planting windows for the 67 new provinces must come from PSA Open Stat / DA regional calendars — wrong windows would produce wrong farmer advisories, so this needs source data, not invention. Until then the pipeline safely scores only calendared provinces (staging inner-join excludes the rest), and the "all 82 provinces have risk scores per run" dbt test is deferred with it. The weighted station→province dbt join (risk model) also lands with that work.
 
 > A weekly El Niño agricultural risk system for 15 Luzon provinces (PAGASA → risk score → Claude advisory → SMS). Because it warns farmers, **correctness and delivery reliability are the top priorities** — a silent failure or an under-stated risk has real-world cost.
