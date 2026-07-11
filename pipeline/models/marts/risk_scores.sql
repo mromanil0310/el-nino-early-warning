@@ -7,17 +7,19 @@
 --
 -- Materializes as a TABLE for fast dashboard queries.
 -- Runs weekly after PAGASA data is scraped.
+--
+-- The table materialization drops and recreates this table every run, which does NOT
+-- carry over the FK to provinces from the original hand-written migration. Without it,
+-- PostgREST can't resolve the embedded provinces(...) join the dashboard and
+-- digest_generator both rely on (fails with PGRST200 "no relationship found"). The
+-- last post_hook below re-adds it fresh every run, since the table itself is fresh
+-- every run.
 
 {{ config(
     materialized='table',
     post_hook=[
         "CREATE INDEX IF NOT EXISTS idx_risk_scores_province_week ON {{ this }} (province_id, week_of DESC)",
         "CREATE INDEX IF NOT EXISTS idx_risk_scores_risk_level ON {{ this }} (risk_level)",
-        -- `table` materialization drops and recreates this table every run, which does
-        -- NOT carry over the FK from the original hand-written migration. Without it,
-        -- PostgREST can't resolve the embedded `provinces(...)` join the dashboard and
-        -- digest_generator both rely on (fails with PGRST200 "no relationship found").
-        -- Re-added fresh each run since the table itself is fresh each run.
         "ALTER TABLE {{ this }} ADD CONSTRAINT fk_risk_scores_province FOREIGN KEY (province_id) REFERENCES provinces(id)"
     ]
 ) }}
