@@ -25,13 +25,20 @@ models:
       +schema: staging
 
     # Marts: tables (pre-computed for fast dashboard queries)
+    # No +schema override — dbt's default generate_schema_name macro
+    # CONCATENATES a configured schema onto the profile's target schema
+    # (public + public = "public_public"), it doesn't replace it. Omitting
+    # the override is what makes this land in plain `public`, where the
+    # migrations created the tables and where the dashboard's anon RLS
+    # policies and Supabase's PostgREST both expect it.
     marts:
       +materialized: table
-      +schema: public
 
 seeds:
   elnino_early_warning:
-    +schema: public
+    # No +schema override here either — same generate_schema_name gotcha;
+    # omitting it keeps seeds in plain `public`, matching the tables the
+    # migrations already created and the CSVs already imported into.
     provinces:
       +column_types:
         id: integer

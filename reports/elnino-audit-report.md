@@ -1,6 +1,27 @@
 # El Niño Early Warning — Audit & Backlog Report
 
-_Last updated: 2026-07-08. Source of truth for bugs, fixes, and the prioritized backlog. Newest dated section is authoritative; older sections retained for history._
+_Last updated: 2026-07-11. Source of truth for bugs, fixes, and the prioritized backlog. Newest dated section is authoritative; older sections retained for history._
+
+## 🚀 Deployment progress — 2026-07-11
+
+**Supabase project is now LIVE** (project ref `niqphdpmcuiaosamcvmf`, free tier, Southeast Asia region) — the first of the four remaining deployment steps from the Phase 1 checklist.
+
+- All 6 migrations applied and verified (001–006).
+- Reference tables seeded and row counts confirmed via REST API: `provinces` (82), `crop_calendars` (32), `pagasa_stations` (57), `province_station_mapping` (108).
+- `dashboard/.env.local` updated with the real project URL + anon key (local dev only — not committed, per `.gitignore`).
+- Verified end-to-end: dashboard correctly showed a schema-cache error before migrations, then the correct "no data yet" empty state after seeding — confirming both the live connection and the ELN-027 fail-loud error handling work against a real backend, not just stubbed data.
+
+**Still empty (expected, not a bug):** `risk_scores`, `pagasa_forecasts`, `weekly_digests` — these are pipeline outputs, populated only once the pipeline actually runs (scraper → dbt → digest generator), not by manual seeding.
+
+**Correction: Railway is not needed.** `.github/workflows/pipeline.yml` is already a complete, self-contained weekly pipeline runner (scrape → dbt run/test → AI advisories → SMS → Vercel rebuild hook), scheduled every Monday 06:00 PHT and manually triggerable via `workflow_dispatch` (with a `dry_run` input that skips SMS). The 7 required secrets already existed in the repo (set 2026-06-27) but held placeholder values — that's why every scheduled run had been failing with DNS errors. No separate Railway deployment is required; updating these secrets is enough.
+
+**ELN-028 — pipeline deployment fixes (2026-07-11):**
+- All Supabase secrets (`SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_DB_HOST`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`) and `ANTHROPIC_API_KEY` updated to real values; `SEMAPHORE_API_KEY` intentionally left as a placeholder for now (SMS not needed to verify core risk-scoring; `dry_run=true` skips that step).
+- **Fixed:** `pipeline/requirements-pipeline.txt` still pinned `anthropic==0.34.2` — the ELN-018 SDK bump only touched `pipeline/requirements.txt`, missing the leaner file GitHub Actions actually installs from. Now `0.116.0` in both.
+- **Fixed:** `SUPABASE_DB_HOST` was initially set to the Direct Connection host, which resolved to an IPv6-only address — GitHub Actions runners can't reach IPv6, causing `Network is unreachable`. Corrected to the Session Pooler host (`aws-1-ap-northeast-2.pooler.supabase.com`, IPv4-proxied) and matching pooler-format user (`postgres.<project-ref>`).
+- **Fixed (real bug, not a config typo):** `dbt_project.yml` had `+schema: public` set explicitly on both the `seeds` and `marts` blocks. dbt's default `generate_schema_name` macro *concatenates* a configured schema onto the profile's target schema rather than replacing it — since the profile's target schema is also `public`, this produced `public_public`, a schema that doesn't exist. All seed and mart tables live in plain `public` (created by the migrations, populated via manual CSV import), so every `ref()` to them failed with `relation does not exist`. Removed the redundant overrides; `staging: +schema: staging` was left alone (internal-only, not queried externally).
+
+**Remaining before public launch:** get one full pipeline run green (in progress), deploy the dashboard to Vercel with the Supabase URL/anon key now in `.env.local`, deploy the inbound webhook (with `SEMAPHORE_WEBHOOK_SECRET` from ELN-025), set up Semaphore.ph for real SMS delivery, then confirm real risk scores render on the live dashboard before calling it public.
 
 > ## ✅ Pilot complete (`v1.0.0-pilot`) — Phase 2 started 2026-07-08
 > Every defect and cleanly-completable feature is closed and CI-verified — pipeline,
