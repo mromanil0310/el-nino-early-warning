@@ -6,10 +6,14 @@ Minimal inbound-SMS webhook for Semaphore.ph — the collection channel for ELN-
   • "STOP" / "UNSUBSCRIBE" / "TIGIL" …  → sms_opt_outs       (send_sms then suppresses it)
   • any other reply                     → advisory_feedback  (acted/not_acted/need_help/unknown)
 
-Deploy as a small always-on web service (e.g. a second Railway service) and point the
-Semaphore inbound webhook at `POST /sms/inbound`. It reuses the SAME pure logic as the
-weekly pipeline — feedback.classify_inbound + delivery.normalize_ph_phone — so there is
-no parallel re-implementation to drift.
+Deploy as a small always-on web service (Railway, Root Directory = pipeline/webhook)
+and point the Semaphore inbound webhook at `POST /sms/inbound`. Its pure-logic
+dependencies (feedback.py, phone.py) are VENDORED copies of the weekly pipeline's
+pipeline/scripts/feedback.py and the normalize_ph_phone() function from
+pipeline/sms/delivery.py, not sys.path imports of those sibling directories — Railway's
+subdirectory deploy only copies pipeline/webhook/ into the build, so anything outside
+it (including sibling folders) is never present in the container. See the vendored
+files' own docstrings for what to keep in sync if the original logic changes.
 
 Env: SUPABASE_URL, SUPABASE_SERVICE_KEY, PORT (optional),
 SEMAPHORE_WEBHOOK_SECRET (optional — enables HMAC signature validation; set the
@@ -18,17 +22,14 @@ same value in Semaphore account settings → Inbound Webhook → Signature Secre
 
 import logging
 import os
-import sys
 from datetime import date
 
 from flask import Flask, abort, jsonify, request
 from supabase import create_client
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "scripts"))
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "sms"))
-from feedback import classify_inbound  # noqa: E402
-from delivery import normalize_ph_phone  # noqa: E402
-from signature import verify_semaphore_signature  # noqa: E402
+from feedback import classify_inbound
+from phone import normalize_ph_phone
+from signature import verify_semaphore_signature
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
