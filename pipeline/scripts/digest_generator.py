@@ -49,10 +49,16 @@ def get_iso_week_start(d: date) -> date:
 
 
 def fetch_risk_scores_for_week(week_of: date) -> list[dict]:
-    """Fetch all risk scores for the given week with province and forecast data."""
+    """Fetch all risk scores for the given week with province data.
+
+    Note: seasonal_outlook/rainfall_anomaly_pct live directly on risk_scores
+    (copied over by the dbt model's forecast join) — no separate embed of
+    pagasa_forecasts is needed, and PostgREST has no FK to resolve one by
+    anyway (risk_scores was never linked to pagasa_forecasts, even in the
+    original migration).
+    """
     result = supabase.table("risk_scores").select(
-        "*, provinces(name, region_code, pagasa_zone), "
-        "pagasa_forecasts(seasonal_outlook, rainfall_anomaly_pct)"
+        "*, provinces(name, region_code, pagasa_zone)"
     ).eq("week_of", week_of.isoformat()).execute()
     return result.data or []
 
@@ -173,7 +179,6 @@ def run(week_of: date | None = None) -> int:
     generated = 0
     for row in risk_scores:
         province = row.get("provinces", {})
-        forecast = row.get("pagasa_forecasts", {}) or {}
         province_name = province.get("name", "Unknown")
         province_id = row["province_id"]
 
@@ -187,8 +192,8 @@ def run(week_of: date | None = None) -> int:
                 risk_level=row["risk_level"],
                 crop_stage=row.get("crop_stage", "unknown"),
                 trend=row.get("trend", "stable"),
-                seasonal_outlook=forecast.get("seasonal_outlook", "Below Normal"),
-                rainfall_anomaly_pct=float(forecast.get("rainfall_anomaly_pct", -25.0)),
+                seasonal_outlook=row.get("seasonal_outlook", "Below Normal"),
+                rainfall_anomaly_pct=float(row.get("rainfall_anomaly_pct") or -25.0),
                 week_of=week_of,
             )
             write_digest(province_id, week_of, advisory)
