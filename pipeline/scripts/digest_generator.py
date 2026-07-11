@@ -149,15 +149,21 @@ Do not add headers, bullets, or any other text."""
     }
 
 
-def write_digest(province_id: int, week_of: date, advisory: dict[str, str]) -> None:
-    """Upsert weekly digest to Supabase."""
+def write_digest(province_id: int, crop: str, week_of: date, advisory: dict[str, str]) -> None:
+    """Upsert weekly digest to Supabase.
+
+    Keyed on (province_id, crop, week_of) — a province growing multiple crops
+    (e.g. corn + palay) gets one digest row PER crop, not one shared row that
+    the last-processed crop silently overwrites (ELN-029).
+    """
     supabase.table("weekly_digests").upsert({
         "province_id": province_id,
+        "crop": crop,
         "week_of": week_of.isoformat(),
         "advisory_en": advisory["advisory_en"],
         "advisory_tl": advisory["advisory_tl"],
         "sms_text": advisory["sms_text"],
-    }, on_conflict="province_id,week_of").execute()
+    }, on_conflict="province_id,crop,week_of").execute()
 
 
 def run(week_of: date | None = None) -> int:
@@ -196,7 +202,7 @@ def run(week_of: date | None = None) -> int:
                 rainfall_anomaly_pct=float(row.get("rainfall_anomaly_pct") or -25.0),
                 week_of=week_of,
             )
-            write_digest(province_id, week_of, advisory)
+            write_digest(province_id, row["crop"], week_of, advisory)
             generated += 1
             log.info(f"    ✓ {province_name}: {advisory['sms_text'][:60]}...")
         except Exception as e:

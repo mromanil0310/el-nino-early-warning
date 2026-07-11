@@ -43,7 +43,7 @@ export default function ProvinceCard({ score }: ProvinceCardProps) {
     if (!expanded && !digest) {
       setLoading(true)
       const [d, hist] = await Promise.all([
-        getDigestForProvince(score.province_id, score.week_of),
+        getDigestForProvince(score.province_id, score.crop, score.week_of),
         getHistoricalScores(score.province_id, score.crop, 8),
       ])
       setDigest(d)

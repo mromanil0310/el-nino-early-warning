@@ -58,6 +58,7 @@ export interface RiskScore {
 export interface WeeklyDigest {
   id: number
   province_id: number
+  crop: string
   week_of: string
   advisory_en: string
   advisory_tl: string
@@ -92,12 +93,14 @@ export async function getLatestRiskScores(): Promise<RiskScore[]> {
 
 export async function getDigestForProvince(
   provinceId: number,
+  crop: string,
   weekOf: string
 ): Promise<WeeklyDigest | null> {
   const { data, error } = await client()
     .from('weekly_digests')
     .select('*')
     .eq('province_id', provinceId)
+    .eq('crop', crop)
     .eq('week_of', weekOf)
     .maybeSingle()
 
