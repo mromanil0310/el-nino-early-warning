@@ -275,6 +275,11 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-4 py-4 text-xs text-gray-500 text-center space-y-1">
             <p>Data sources: PAGASA Seasonal Climate Outlook · PhilRice El Niño Crop Calendar</p>
             <p>Risk formula: rainfall_severity_weight × crop_stage_vulnerability_index × 100 (PhilRice methodology)</p>
+            <p>
+              <a href="/USER_GUIDE/" className="text-blue-700 hover:underline">
+                How to use this dashboard
+              </a>
+            </p>
             <p>Built by Biboy Labs · For pilot use by LGU agricultural offices only</p>
           </div>
         </footer>
