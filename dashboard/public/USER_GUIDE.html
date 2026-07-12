@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>El Niño Early Warning — How to Use the Dashboard</title>
+<style>
+  :root {
+    --bg: #F9FAFB;
+    --surface: #FFFFFF;
+    --surface-high: #F3F4F6;
+    --border: #E5E7EB;
+    --primary: #166534;
+    --primary-light: #16A34A;
+    --amber: #D97706;
+    --red: #DC2626;
+    --text: #111827;
+    --text-sub: #4B5563;
+    --text-muted: #9CA3AF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 20px 100px; }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 56px 20px 36px;
+    background:
+      radial-gradient(900px 340px at 50% -120px, rgba(22,101,52,0.10), transparent 70%),
+      var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .hero .logo { font-size: 48px; margin-bottom: 6px; }
+  .hero h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: -0.4px; }
+  .hero .tagline { color: var(--primary-light); font-weight: 700; font-size: 15px; margin: 0; }
+  .hero .sub { color: var(--text-sub); margin: 14px auto 0; max-width: 560px; font-size: 15px; }
+  .pilot-pill {
+    display: inline-block; margin-top: 16px; padding: 6px 14px; border-radius: 999px;
+    background: rgba(22,101,52,0.10); border: 1px solid rgba(22,101,52,0.35);
+    color: var(--primary); font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+  }
+  .app-link {
+    display: inline-block; margin-top: 14px; padding: 10px 22px; border-radius: 999px;
+    background: var(--primary); color: #fff; font-size: 14px; font-weight: 700;
+    text-decoration: none; letter-spacing: 0.2px;
+  }
+  .app-link:hover { background: var(--primary-light); }
+
+  /* Why this exists */
+  .why {
+    margin: 32px 0; padding: 24px 26px; background: #ECFDF5;
+    border: 1px solid rgba(22,101,52,0.25); border-radius: 16px;
+  }
+  .why h2 { margin: 0 0 10px; font-size: 15px; letter-spacing: 0.3px; color: var(--primary); }
+  .why p { margin: 0 0 10px; font-size: 15px; color: #14532D; }
+  .why p:last-child { margin-bottom: 0; }
+
+  /* TOC */
+  .toc {
+    margin: 28px 0; padding: 22px 24px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 16px;
+  }
+  .toc h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: 1.5px; color: var(--text-sub); text-transform: uppercase; }
+  .toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  .toc li { margin-bottom: 7px; }
+  .toc a { color: var(--text); text-decoration: none; }
+  .toc a:hover { color: var(--primary); }
+
+  /* Sections */
+  section { margin-top: 52px; scroll-margin-top: 20px; }
+  .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 9px; background: var(--primary);
+    color: #fff; font-weight: 800; font-size: 15px; margin-right: 12px; flex: 0 0 auto;
+  }
+  h2.sec-title { display: flex; align-items: center; font-size: 22px; margin: 0 0 8px; letter-spacing: -0.2px; }
+  .sec-intro { color: var(--text-sub); margin: 0 0 20px; font-size: 15px; }
+
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 26px; align-items: start; }
+  @media (max-width: 700px) { .layout { grid-template-columns: 1fr; } .mock { margin: 0 auto; } .toc ol { columns: 1; } }
+
+  p { margin: 0 0 14px; }
+  ul.points { margin: 0 0 14px; padding-left: 0; list-style: none; }
+  ul.points li { position: relative; padding-left: 26px; margin-bottom: 10px; }
+  ul.points li::before { content: "→"; position: absolute; left: 0; color: var(--primary-light); font-weight: 700; }
+  strong { color: var(--text); }
+  .k { color: var(--primary); font-weight: 700; }
+  .red-txt { color: var(--red); font-weight: 700; }
+  .amber-txt { color: var(--amber); font-weight: 700; }
+  .green-txt { color: var(--primary-light); font-weight: 700; }
+
+  .callout {
+    margin: 18px 0; padding: 14px 18px; border-radius: 12px;
+    background: rgba(22,101,52,0.06); border: 1px solid rgba(22,101,52,0.25);
+    font-size: 14.5px; color: var(--text);
+  }
+  .callout.tip { background: rgba(22,101,52,0.06); border-color: rgba(22,101,52,0.25); }
+  .callout.warn { background: #FFFBEB; border-color: rgba(217,119,6,0.40); }
+  .callout b { display: block; margin-bottom: 3px; }
+
+  /* Dashboard mockup */
+  .mock {
+    width: 300px; border-radius: 14px; overflow: hidden;
+    background: var(--bg); border: 1px solid var(--border);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+  }
+  .mock-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 10px 12px; }
+  .mock-body { padding: 12px; min-height: 260px; }
+  .cap { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 10px; font-style: italic; }
+
+  .m-title { font-size: 14px; font-weight: 800; margin: 0 0 2px; }
+  .m-sub { font-size: 10.5px; color: var(--text-sub); margin: 0 0 10px; }
+  .m-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 11px; margin-bottom: 8px; }
+  .m-card.hi { border-color: rgba(220,38,38,0.35); background: #FEF2F2; }
+  .m-card.med { border-color: rgba(217,119,6,0.35); background: #FFFBEB; }
+  .m-card.ok { border-color: rgba(22,163,74,0.35); background: #F0FDF4; }
+  .m-row { display: flex; align-items: center; justify-content: space-between; }
+  .m-lbl { font-size: 12px; font-weight: 700; }
+  .m-val { font-size: 11px; color: var(--text-sub); }
+  .m-badge { font-size: 9.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
+  .m-badge.hi { background: #FEE2E2; color: var(--red); }
+  .m-badge.med { background: #FEF3C7; color: var(--amber); }
+  .m-badge.ok { background: #DCFCE7; color: #15803D; }
+  .m-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+  .m-chip { display: inline-block; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--surface-high); color: var(--text-sub); margin: 2px 3px 2px 0; }
+  .m-chip.sel { background: var(--primary); color: #fff; }
+  .m-disclaimer { background: #FFFBEB; border: 1px solid rgba(217,119,6,0.3); border-radius: 8px; padding: 7px 9px; font-size: 8.5px; color: #92400E; margin-bottom: 10px; }
+
+  footer { margin-top: 60px; padding-top: 26px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 13px; text-align: center; }
+  footer a { color: var(--primary); text-decoration: none; }
+  .lead { font-size: 12px; letter-spacing: 1.5px; color: var(--text-sub); text-transform: uppercase; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="logo" aria-hidden="true">🌾</div>
+  <h1>El Niño Early Warning</h1>
+  <p class="tagline">Philippine Agricultural Risk Dashboard</p>
+  <p class="sub">A weekly, province-by-province warning system that turns PAGASA's official climate outlook into a plain-language "what should farmers do this week" advisory — before the damage is done, not after.</p>
+  <a class="app-link" href="https://el-nino-early-warning.vercel.app" target="_blank">Open the Dashboard →</a>
+  <br/>
+  <span class="pilot-pill">🌱 PILOT · Luzon Provinces</span>
+</div>
+
+<div class="wrap">
+
+  <div class="why">
+    <h2>WHY THIS APP EXISTS</h2>
+    <p>El Niño brings below-normal rainfall to large parts of the Philippines, and the damage it does to rice and corn depends entirely on <strong>timing</strong> — a dry spell during a crop's early growth is a setback; the same dry spell during its reproductive stage (when it needs water most) can wipe out the harvest. PAGASA already publishes the seasonal rainfall outlook every month. What didn't exist was a fast, simple way to translate that scientific bulletin into something an LGU agricultural officer or a cooperative could act on <em>this week</em>, for <em>their</em> province, for <em>their</em> crop's exact growth stage.</p>
+    <p>This dashboard closes that gap: it combines PAGASA's forecast with PhilRice's crop-vulnerability data to score every province × crop combination from Low to High risk, then uses AI to write a short, specific advisory in English and Filipino — plus an SMS-ready version cooperatives can forward directly to farmers.</p>
+  </div>
+
+  <div class="toc">
+    <h2>What's inside</h2>
+    <ol>
+      <li><a href="#open">Open the dashboard</a></li>
+      <li><a href="#reading">Reading the risk summary</a></li>
+      <li><a href="#map">The province risk map</a></li>
+      <li><a href="#filters">Searching &amp; filtering</a></li>
+      <li><a href="#cards">Province cards &amp; advisories</a></li>
+      <li><a href="#export">Exporting data</a></li>
+      <li><a href="#cadence">How often this updates</a></li>
+      <li><a href="#disclaimer">What this is — and isn't</a></li>
+      <li><a href="#audience">Who this is for</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 -->
+  <section id="open">
+    <h2 class="sec-title"><span class="step-num">1</span>Open the dashboard</h2>
+    <p class="sec-intro">No login, no install — it's a public web page.</p>
+    <div class="layout">
+      <div>
+        <p>Open this link in any browser, on desktop or mobile:</p>
+        <p style="background:var(--surface);border:1px solid var(--border);padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600;color:var(--primary);word-break:break-all;">
+          https://el-nino-early-warning.vercel.app
+        </p>
+        <div class="callout">
+          <b>📶 Works on any device</b>
+          The dashboard is a responsive web page — no app store, no account, nothing to install. Bookmark it, or add it to your home screen like any website.
+        </div>
+        <div class="callout tip">
+          <b>🔄 It refreshes on its own</b>
+          Every time you load the page, you see the latest week's risk scores. There's nothing to manually sync.
+        </div>
+      </div>
+      <div>
+        <div class="mock">
+          <div class="mock-bar"><span style="font-size:13px;font-weight:800;">🌾 El Niño Early Warning</span></div>
+          <div class="mock-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+            <div style="font-size:36px;">🌾</div>
+            <div class="m-title" style="margin-top:8px;">Philippine Agricultural<br/>Risk Dashboard</div>
+            <div class="m-sub" style="margin-top:4px;">15 provinces monitored</div>
+          </div>
+        </div>
+        <p class="cap">Opens straight to this week's risk scores</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="reading">
+    <h2 class="sec-title"><span class="step-num">2</span>Reading the risk summary</h2>
+    <p class="sec-intro">The top of the dashboard gives you the headline number before anything else.</p>
+    <div class="layout">
+      <div>
+        <ul class="points">
+          <li><strong>Risk summary bar</strong> — how many province × crop assessments fall into <span class="red-txt">High</span> (score &gt; 65), <span class="amber-txt">Medium</span> (35–65), or <span class="green-txt">Low</span> (&lt; 35) risk this week.</li>
+          <li><strong>Week of</strong> (top right) — the date this batch of scores was computed. The pipeline runs every Monday morning.</li>
+        </ul>
+        <div class="callout">
+          <b>🧮 Where the number comes from</b>
+          <span class="k">risk_score = rainfall_severity_weight × crop_stage_vulnerability_index × 100</span>. In plain terms: how dry PAGASA expects the season to be, multiplied by how vulnerable the crop is <em>at its current growth stage</em>. The same dry forecast scores very differently for a newly-planted field versus one about to flower.
+        </div>
+      </div>
+      <div>
+        <div class="mock">
+          <div class="mock-bar"><span style="font-size:12px;font-weight:700;">Risk summary — 21 assessments</span></div>
+          <div class="mock-body">
+            <div class="m-row" style="text-align:center;">
+              <div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--red);">0</div><div class="m-val">High</div></div>
+              <div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--amber);">17</div><div class="m-val">Medium</div></div>
+              <div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--primary-light);">4</div><div class="m-val">Low</div></div>
+            </div>
+            <div style="margin-top:10px;height:8px;border-radius:4px;overflow:hidden;display:flex;">
+              <div style="width:81%;background:var(--amber);"></div>
+              <div style="width:19%;background:var(--primary-light);"></div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">Same shape every week — scan it in 5 seconds</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="map">
+    <h2 class="sec-title"><span class="step-num">3</span>The province risk map</h2>
+    <p class="sec-intro">A dot per province, colored by its worst crop's risk level, positioned roughly where it sits on the map.</p>
+    <div class="layout">
+      <div>
+        <ul class="points">
+          <li><strong>Click any dot</strong> (or a row in the ranked list beside it) to jump straight to that province's card below.</li>
+          <li>The ranked list shows the top provinces by risk score — the ones worth checking first.</li>
+        </ul>
+        <div class="callout tip">
+          <b>👆 It's a shortcut, not just a picture</b>
+          If you already know which province you're checking on, clicking its dot is faster than scrolling the full list.
+        </div>
+      </div>
+      <div>
+        <div class="mock">
+          <div class="mock-bar"><span style="font-size:12px;font-weight:700;">Risk map — 15 provinces</span></div>
+          <div class="mock-body">
+            <div style="display:flex;gap:10px;font-size:9.5px;color:var(--text-sub);margin-bottom:8px;">
+              <span><span class="m-dot" style="background:var(--red);"></span>High</span>
+              <span><span class="m-dot" style="background:var(--amber);"></span>Medium</span>
+              <span><span class="m-dot" style="background:var(--primary-light);"></span>Low</span>
+            </div>
+            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--amber);"></span>Pangasinan</span><span class="m-val">38 · Medium</span></div></div>
+            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--amber);"></span>Nueva Ecija</span><span class="m-val">38 · Medium</span></div></div>
+            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--primary-light);"></span>Batangas</span><span class="m-val">13 · Low</span></div></div>
+          </div>
+        </div>
+        <p class="cap">Click a dot or a row — both do the same thing</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="filters">
+    <h2 class="sec-title"><span class="step-num">4</span>Searching &amp; filtering</h2>
+    <p class="sec-intro">If you only care about one province, one crop, or one risk level, narrow the list down.</p>
+    <div class="layout">
+      <div>
+        <ul class="points">
+          <li><strong>Search box</strong> — type a province name to jump straight to it.</li>
+          <li><strong>Risk level chips</strong> — <span class="k">All / High / Medium / Low</span>.</li>
+          <li><strong>Crop chips</strong> — <span class="k">All Crops / Palay / Corn</span>.</li>
+          <li>The count on the right (<span class="k">"N of M shown"</span>) always tells you how filtered the view currently is.</li>
+        </ul>
+        <div class="callout">
+          <b>🧹 Reset in one click</b>
+          If a filter combination leaves nothing to show, a <span class="k">Clear all filters</span> link appears — no need to reset each one by hand.
+        </div>
+      </div>
+      <div>
+        <div class="mock">
+          <div class="mock-bar"><span style="font-size:12px;font-weight:700;">Filters</span></div>
+          <div class="mock-body">
+            <div class="m-sub" style="margin-bottom:6px;">🔍 Search province…</div>
+            <div style="margin-bottom:8px;"><span class="m-chip sel">All</span><span class="m-chip">High</span><span class="m-chip">Medium</span><span class="m-chip">Low</span></div>
+            <div><span class="m-chip sel">All Crops</span><span class="m-chip">Palay</span><span class="m-chip">Corn</span></div>
+          </div>
+        </div>
+        <p class="cap">Chips stay lit to show what's active</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="cards">
+    <h2 class="sec-title"><span class="step-num">5</span>Province cards &amp; advisories</h2>
+    <p class="sec-intro">Each card is one province × crop combination. This is where the actual guidance lives.</p>
+    <div class="layout">
+      <div>
+        <ul class="points">
+          <li><strong>Header</strong> — province, region, crop, season, trend arrow (↑ rising / ↓ falling / → stable / <span class="k">NEW</span>), and the risk badge with its numeric score.</li>
+          <li><strong>Quick facts</strong> — crop growth stage, PAGASA outlook label, rainfall anomaly %, and the week.</li>
+          <li><strong>Show advisory ▼</strong> — expands to reveal:
+            <ul class="points" style="margin-top:8px;">
+              <li>An 8-week <strong>risk trend</strong> sparkline, so you can see if things are getting better or worse.</li>
+              <li>A 3-sentence AI-generated advisory, toggleable between <span class="k">English</span> and <span class="k">Filipino</span> — your language choice is remembered next time.</li>
+              <li>A ready-to-send <strong>SMS text</strong> version, already trimmed to fit one message.</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      <div>
+        <div class="mock">
+          <div class="mock-bar"><span style="font-size:12px;font-weight:700;">Nueva Ecija · Palay</span></div>
+          <div class="mock-body">
+            <div class="m-card med">
+              <div class="m-row"><span class="m-lbl">Nueva Ecija</span><span class="m-badge med">Medium 38</span></div>
+              <div class="m-val" style="margin-top:4px;">Region III · Palay (wet)</div>
+            </div>
+            <div class="m-card" style="font-size:10.5px;">
+              <div>Stage: <strong>reproductive</strong></div>
+              <div>Outlook: <strong>Below Normal</strong></div>
+              <div>Rainfall: <strong>-28%</strong></div>
+            </div>
+            <div class="m-card ok" style="font-size:10px;">
+              <div style="margin-bottom:4px;"><span class="m-chip sel" style="padding:2px 8px;">English</span><span class="m-chip" style="padding:2px 8px;">Filipino</span></div>
+              Prioritize irrigation this week — reproductive-stage rice is most vulnerable to a rainfall deficit right now.
+            </div>
+          </div>
+        </div>
+        <p class="cap">Tap ▼ to reveal the full advisory + SMS text</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="export">
+    <h2 class="sec-title"><span class="step-num">6</span>Exporting data</h2>
+    <p class="sec-intro">For reports, briefings, or your own records.</p>
+    <div class="layout">
+      <div>
+        <ul class="points">
+          <li>The <span class="k">⬇ Export CSV</span> button downloads exactly what's currently filtered/visible — not the whole dataset — as a spreadsheet-ready file.</li>
+          <li>Includes province, region, crop, season, week, growth stage, outlook, rainfall anomaly, risk score, level, and trend.</li>
+        </ul>
+        <div class="callout tip">
+          <b>📊 Filter first, then export</b>
+          Want just your region's High-risk provinces in the file? Set those filters first — the export always matches what's on screen.
+        </div>
+      </div>
+      <div>
+        <div class="mock">
+          <div class="mock-bar"><span style="font-size:12px;font-weight:700;">Export</span></div>
+          <div class="mock-body" style="display:flex;align-items:center;justify-content:center;min-height:140px;">
+            <div style="text-align:center;">
+              <div style="font-size:28px;">⬇️</div>
+              <div class="m-lbl" style="margin-top:6px;">Export CSV</div>
+              <div class="m-val">elnino-risk-scores-2026-07-06.csv</div>
+            </div>
+          </div>
+        </div>
+        <p class="cap">One click, matches your current filters</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="cadence">
+    <h2 class="sec-title"><span class="step-num">7</span>How often this updates</h2>
+    <p class="sec-intro">A fully automated weekly cycle — nobody has to remember to run anything.</p>
+    <div class="layout">
+      <div>
+        <ul class="points">
+          <li>Every <strong>Monday at 6:00 AM (Philippine Time)</strong>, the system automatically: fetches the latest PAGASA seasonal outlook → recomputes every province × crop risk score → generates fresh AI advisories → sends SMS alerts to registered cooperative contacts → this dashboard picks up the new numbers on next load.</li>
+          <li>If a week ever shows no data, it means that run hasn't happened yet — check back after Monday morning.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="mock">
+          <div class="mock-bar"><span style="font-size:12px;font-weight:700;">Weekly cycle</span></div>
+          <div class="mock-body" style="font-size:10.5px;">
+            <div class="m-card">📡 PAGASA outlook fetched</div>
+            <div class="m-card">🧮 Risk scores computed</div>
+            <div class="m-card">🤖 AI advisories written</div>
+            <div class="m-card">📲 SMS sent to cooperatives</div>
+            <div class="m-card ok">🌐 Dashboard updated</div>
+          </div>
+        </div>
+        <p class="cap">Runs automatically, every Monday, 6 AM PHT</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section id="disclaimer">
+    <h2 class="sec-title"><span class="step-num">8</span>What this is — and isn't</h2>
+    <p class="sec-intro">Read this before you use anything on the dashboard to make a decision.</p>
+    <div class="layout">
+      <div>
+        <div class="callout warn">
+          <b>⚠️ A decision-support tool, not an official advisory</b>
+          Risk scores are model estimates based on public PAGASA seasonal forecasts and PhilRice crop-calendar data. They are meant to help you decide what to check on, not to replace official guidance. <strong>Always verify with your local Department of Agriculture or PAGASA office</strong> before acting on a High-risk reading.
+        </div>
+        <p>This same disclaimer appears in a banner on the live dashboard — it isn't just fine print here.</p>
+      </div>
+      <div>
+        <div class="mock">
+          <div class="mock-bar"><span style="font-size:12px;font-weight:700;">On every page</span></div>
+          <div class="mock-body">
+            <div class="m-disclaimer">DISCLAIMER: This dashboard is a decision-support tool based on public PAGASA seasonal forecasts and PhilRice crop calendars. Risk scores are model estimates. Verify with your local DA or PAGASA office before taking action.</div>
+          </div>
+        </div>
+        <p class="cap">Sits right under the header, always visible</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section id="audience">
+    <h2 class="sec-title"><span class="step-num">9</span>Who this is for</h2>
+    <p class="sec-intro">Built for the people closest to the farmers, in the pilot area.</p>
+    <ul class="points">
+      <li><strong>LGU agricultural officers</strong> — a weekly, province-level snapshot to inform local guidance and planning.</li>
+      <li><strong>Cooperative officers</strong> — receive SMS advisories directly and can forward the ready-made text to farmer members.</li>
+      <li><strong>DA field staff</strong> — a quick reference alongside official PAGASA bulletins when briefing communities.</li>
+    </ul>
+    <div class="callout">
+      <b>🌱 Pilot scope</b>
+      Currently covers Luzon pilot provinces, palay and corn. All 82 Philippine provinces are seeded in the system ahead of the next expansion phase.
+    </div>
+  </section>
+
+  <footer>
+    <p class="lead">El Niño Early Warning · Biboy Labs</p>
+    <p>Data sources: PAGASA Seasonal Climate Outlook · PhilRice El Niño Crop Calendar</p>
+    <p><a href="https://el-nino-early-warning.vercel.app">Open the dashboard →</a></p>
+  </footer>
+
+</div>
+</body>
+</html>
