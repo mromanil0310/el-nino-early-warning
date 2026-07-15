@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Head from 'next/head'
 import { getLatestRiskScores, isConfigured, RiskScore } from '../lib/supabase'
 import { downloadCsv, formatWeekOf, scoresToCsv } from '../lib/format'
@@ -51,6 +51,25 @@ export default function Home() {
   const [filterLevel, setFilterLevel] = useState<FilterLevel>('All')
   const [filterCrop, setFilterCrop] = useState<FilterCrop>('All')
   const [search, setSearch] = useState('')
+  const [pendingScroll, setPendingScroll] = useState(false)
+  const resultsRef = useRef<HTMLDivElement>(null)
+
+  // Selecting a province on the map filters the card list — but on mobile that list
+  // sits well below the map, so without scrolling the tap looks like a no-op. Defer
+  // the scroll to an effect (below) so it runs AFTER the filtered, now-shorter list
+  // has committed — scrolling during that DOM shrink cancels the animation.
+  const handleProvinceSelect = useCallback((name: string) => {
+    setSearch(name)
+    setPendingScroll(true)
+  }, [])
+
+  useEffect(() => {
+    if (!pendingScroll) return
+    // Instant (not smooth) so it lands reliably: a "jump to my result" is clearer
+    // than a long scroll animation, and smooth-scroll is a no-op under reduced-motion.
+    resultsRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' })
+    setPendingScroll(false)
+  }, [pendingScroll])
 
   const load = useCallback(() => {
     setLoading(true)
@@ -172,12 +191,12 @@ export default function Home() {
 
           {/* Risk map overview — clicking a province filters the list below */}
           {!loading && !error && scores.length > 0 && (
-            <ProvinceMap scores={scores} onSelect={(name) => setSearch(name)} />
+            <ProvinceMap scores={scores} onSelect={handleProvinceSelect} />
           )}
 
           {/* Filters */}
           {!loading && !error && scores.length > 0 && (
-            <div className="flex flex-wrap gap-3 items-center">
+            <div ref={resultsRef} className="flex flex-wrap gap-3 items-center scroll-mt-4">
               <div className="relative">
                 <input
                   type="search"

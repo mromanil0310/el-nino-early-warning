@@ -25,6 +25,7 @@ export default function ProvinceCard({ score }: ProvinceCardProps) {
   const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [lang, setLangState] = useState<Lang>(getPreferredLang)
+  const [copied, setCopied] = useState(false)
 
   const setLang = (l: Lang) => {
     setLangState(l)
@@ -38,6 +39,37 @@ export default function ProvinceCard({ score }: ProvinceCardProps) {
   const provinceName = score.provinces?.name ?? `Province ${score.province_id}`
   const regionCode = score.provinces?.region_code ?? ''
   const advisoryId = `advisory-${score.province_id}-${score.crop}-${score.season}`
+
+  // Distribution is the whole point for reach: one dashboard viewer can forward a
+  // plain-language advisory to a barangay group chat or SMS. Uses the native share
+  // sheet where available (mobile), falling back to clipboard copy on desktop. Shares
+  // whichever language is currently selected, plus a link so recipients can look up
+  // their own province.
+  async function shareAdvisory() {
+    if (!digest) return
+    const body = lang === 'en' ? digest.advisory_en : digest.advisory_tl
+    const heading = `${provinceName} — ${capitalize(score.crop)}: ${score.risk_level} El Niño risk`
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const text = `${heading}\n\n${body}${origin ? `\n\n${origin}` : ''}`
+
+    if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: heading, text })
+        return
+      } catch (err) {
+        // User dismissed the share sheet — respect that, don't silently copy instead.
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        // Any other share failure falls through to the clipboard path below.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 2000)
+    } catch {
+      /* clipboard blocked (insecure context / denied permission) — nothing else to do */
+    }
+  }
 
   async function handleExpand() {
     if (!expanded && !digest) {
@@ -139,6 +171,13 @@ export default function ProvinceCard({ score }: ProvinceCardProps) {
                 <p className="text-xs font-medium text-gray-500 mb-1">SMS text:</p>
                 <p className="text-xs font-mono text-gray-700">{digest.sms_text}</p>
               </div>
+              <button
+                onClick={shareAdvisory}
+                aria-live="polite"
+                className="mt-3 inline-flex items-center gap-1 rounded-md border border-blue-300 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              >
+                {copied ? '✓ Copied to clipboard' : '↗ Share this advisory'}
+              </button>
             </>
           )}
         </div>
