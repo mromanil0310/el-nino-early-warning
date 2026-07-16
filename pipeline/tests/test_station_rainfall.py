@@ -34,12 +34,13 @@ class TestSeverityFromProbabilities:
     def test_all_above_is_zero(self):
         assert severity_from_probabilities(0.0, 0.0, 1.0) == 0.0
 
-    def test_all_near_is_quarter(self):
-        assert severity_from_probabilities(0.0, 1.0, 0.0) == pytest.approx(0.25)
+    def test_all_near_is_zero(self):
+        # Near-normal rainfall carries no drought risk: severity = P_below only.
+        assert severity_from_probabilities(0.0, 1.0, 0.0) == 0.0
 
-    def test_climatology_is_between(self):
-        # 1/3 each → 0.333*1.0 + 0.333*0.25 + 0.333*0 = ~0.417
-        assert severity_from_probabilities(1 / 3, 1 / 3, 1 / 3) == pytest.approx(0.4167, abs=1e-3)
+    def test_climatology_is_one_third(self):
+        # 1/3 each → severity = P_below = 1/3 (~0.333), Low even at peak vulnerability.
+        assert severity_from_probabilities(1 / 3, 1 / 3, 1 / 3) == pytest.approx(1 / 3, abs=1e-3)
 
     def test_accepts_percentages(self):
         # Same distribution expressed 0–100 must give the same severity as 0–1.
@@ -63,9 +64,9 @@ class TestSeverityFromProbabilities:
 
 
 class TestCalibrationVsLegacy:
-    """A canonical distribution per legacy label must reproduce the legacy step weight
-    (below 0.75, much-below 1.0, near 0.25) within a small tolerance — so switching to
-    the continuous model does not silently recalibrate existing warnings."""
+    """A canonical distribution per legacy label keeps the below-normal end calibrated
+    with the legacy step weights (below ≈0.75, much-below ≈0.95) so switching to the
+    continuous model doesn't silently move High warnings; near/above map low."""
 
     def test_below_normal_reproduces_075(self):
         pb, pn, pa = probabilities_from_category("below normal")
@@ -79,8 +80,33 @@ class TestCalibrationVsLegacy:
         pb, pn, pa = probabilities_from_category("above normal")
         assert severity_from_probabilities(pb, pn, pa) < 0.30
 
+    def test_near_normal_stays_low(self):
+        # Near Normal (0% anomaly) → severity ≈ climatological floor → Low at reproductive.
+        pb, pn, pa = probabilities_from_category("near normal")
+        assert severity_from_probabilities(pb, pn, pa) < 0.35
+
     def test_unknown_label_defaults_near(self):
         assert probabilities_from_category("gibberish") == probabilities_from_category("near normal")
+
+
+class TestDeadZoneKeepsMildProvincesLow:
+    """The calibration fix: mild-anomaly provinces (−5…−9%) must score Low even at peak
+    crop vulnerability (severity < 0.35), while the drought belt (−18…−30%) stays in the
+    Medium/High range and differentiates."""
+
+    def test_mild_anomalies_low(self):
+        for a in (-5, -8, -9):
+            sev = severity_from_probabilities(*probabilities_from_anomaly(a))
+            assert sev < 0.35, f"anomaly {a}% severity {sev} should be Low (<0.35)"
+
+    def test_drought_belt_high(self):
+        for a in (-22, -25, -28, -30):
+            sev = severity_from_probabilities(*probabilities_from_anomaly(a))
+            assert sev > 0.65, f"anomaly {a}% severity {sev} should be High (>0.65)"
+
+    def test_drought_belt_differentiates(self):
+        sevs = [severity_from_probabilities(*probabilities_from_anomaly(a)) for a in (-22, -25, -28, -30)]
+        assert len(set(round(s, 3) for s in sevs)) == 4  # each distinct
 
 
 class TestProbabilitiesFromAnomaly:
@@ -110,7 +136,11 @@ class TestAnomalyRoundTrip:
 
 class TestLabelFromProbabilities:
     def test_strong_below(self):
-        assert label_from_probabilities(0.80, 0.15, 0.05) == "Much Below Normal"
+        assert label_from_probabilities(0.90, 0.07, 0.03) == "Much Below Normal"
+
+    def test_drought_belt_labelled_below_not_much(self):
+        # −25% → P_below ≈ 0.74 → "Below Normal", not escalated to "Much Below Normal".
+        assert label_from_probabilities(*probabilities_from_anomaly(-25)) == "Below Normal"
 
     def test_moderate_below(self):
         assert label_from_probabilities(0.55, 0.35, 0.10) == "Below Normal"

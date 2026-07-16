@@ -68,34 +68,43 @@ def match_outlook(text: str) -> tuple[str, float] | None:
 # got the SAME severity weight (0.75) and every province scored identically regardless
 # of how strong its drought tilt actually was.
 #
-# This model restores the real signal. Rainfall severity is the EXPECTED drought
-# severity over the forecast distribution:
+# This model restores the real signal. Rainfall severity is the DROUGHT-relevant part
+# of the forecast distribution — the probability of BELOW-normal rainfall:
 #
-#     severity = P_below · 1.0  +  P_near · 0.25  +  P_above · 0.0
+#     severity = P_below · 1.0  +  P_near · 0.0  +  P_above · 0.0  =  P_below
 #
-# The per-outcome severities {below: 1.0, near: 0.25, above: 0.0} are exactly the
-# legacy categorical step weights, so a canonical "Below Normal"-tilted distribution
-# reproduces ≈0.75 and the change is a smooth generalization, not a recalibration.
-# Because it is continuous in the probabilities, two provinces that PAGASA tilts
-# differently now get different severities (and therefore different risk scores).
+# Only below-normal rainfall drives El Niño drought risk, so near- and above-normal
+# outcomes contribute nothing. A canonical "Below Normal"-tilted distribution still
+# reproduces ≈0.75 (P_below ≈ 0.75), so the legacy calibration is preserved at the
+# below-normal end, while near-normal provinces now score low (P_below near the 1/3
+# climatological floor) instead of being propped up by a near-normal severity term.
+# Continuous in the probabilities ⇒ provinces with different tilts get different scores.
+#
+# The anomaly→probability mapping has a DEAD ZONE around 0: mild anomalies (|a| ≤ 8%)
+# stay at the climatological P_below, and the drought signal only ramps in past it — so
+# a −5%…−9% ("near normal") province stays Low at every crop stage, while the drought
+# belt (−18%…−40%) differentiates across the Medium/High range.
 #
 # These functions are the single source of truth, mirrored by:
 #   - models/staging/stg_pagasa_station_forecasts.sql (per-station severity)
 #   - models/marts/int_province_rainfall.sql          (weighted station→province)
 #   - scripts/preview_run.py                          (offline preview / integration test)
 
-# Per-outcome drought severity — identical to the legacy categorical step weights.
+# Per-outcome drought severity. Only below-normal rainfall carries drought risk.
 SEVERITY_BELOW = 1.0
-SEVERITY_NEAR = 0.25
+SEVERITY_NEAR = 0.0
 SEVERITY_ABOVE = 0.0
 
-# Anomaly → probability slopes (per 1% anomaly). Drier (more negative anomaly) raises
-# P_below and lowers P_above around the climatological 1/3 base. Calibrated so the
-# legacy category anomalies reproduce the legacy severities: e.g. Below Normal (−25%)
-# → severity ≈ 0.75, Much Below Normal (−40%) → ≈ 0.95.
+# Anomaly → probability calibration. P_below sits at the climatological base inside a
+# dead zone of ±DEADZONE %, then ramps up with dryness (DRY_SLOPE) / down with wetness
+# (WET_SLOPE). Tuned so Below Normal (−25%) → P_below ≈ 0.74, Much Below (−40%) → ≈0.95,
+# and mild −5…−9% provinces stay ≤ 0.35 (Low even at peak crop vulnerability).
 _CLIMATOLOGICAL = 1.0 / 3.0
-_BELOW_SLOPE = 0.015
-_ABOVE_SLOPE = 0.010
+_PB_BASE = 0.30
+_PB_DEADZONE = 8.0
+_PB_DRY_SLOPE = 0.026
+_PB_WET_SLOPE = 0.030
+_PA_SLOPE = 0.010
 _P_MIN = 0.02
 _P_MAX = 0.95
 
@@ -105,11 +114,12 @@ def _clamp(x: float, lo: float, hi: float) -> float:
 
 
 def severity_from_probabilities(p_below: float, p_near: float, p_above: float) -> float:
-    """Expected drought severity over a PAGASA 3-way rainfall probability distribution.
+    """Drought severity over a PAGASA 3-way rainfall probability distribution.
 
-    Accepts probabilities as fractions (0–1) or percentages (0–100) — the triple is
-    normalized to sum to 1 first, so either scale works. Returns a severity in [0, 1].
-    A degenerate all-zero triple returns 0.0 (no signal).
+    severity = P_below (near/above-normal outcomes carry no drought risk). Accepts
+    probabilities as fractions (0–1) or percentages (0–100) — the triple is normalized
+    to sum to 1 first, so either scale works. Returns a severity in [0, 1]. A degenerate
+    all-zero triple returns 0.0 (no signal).
     """
     total = p_below + p_near + p_above
     if total <= 0:
@@ -124,11 +134,14 @@ def probabilities_from_anomaly(anomaly_pct: float) -> tuple[float, float, float]
 
     Used to express the manual-override baseline (and to fold legacy categorical
     province forecasts into the probability model) when true per-station probabilities
-    aren't available. Negative anomaly = drier = higher P_below. Returns (P_below,
+    aren't available. A dead zone of ±8% keeps mild anomalies at the climatological
+    P_below; beyond it, drier raises P_below and wetter lowers it. Returns (P_below,
     P_near, P_above) as fractions summing to 1.
     """
-    p_below = _clamp(_CLIMATOLOGICAL - anomaly_pct * _BELOW_SLOPE, _P_MIN, _P_MAX)
-    p_above = _clamp(_CLIMATOLOGICAL + anomaly_pct * _ABOVE_SLOPE, _P_MIN, _P_MAX)
+    dry = max(0.0, -anomaly_pct - _PB_DEADZONE)
+    wet = max(0.0, anomaly_pct - _PB_DEADZONE)
+    p_below = _clamp(_PB_BASE + dry * _PB_DRY_SLOPE - wet * _PB_WET_SLOPE, _P_MIN, _P_MAX)
+    p_above = _clamp(_CLIMATOLOGICAL + anomaly_pct * _PA_SLOPE, _P_MIN, _P_MAX)
     p_near = max(0.0, 1.0 - p_below - p_above)
     total = p_below + p_near + p_above
     return (p_below / total, p_near / total, p_above / total)
@@ -148,13 +161,17 @@ def probabilities_from_category(label: str) -> tuple[float, float, float]:
 def anomaly_from_probabilities(p_below: float, p_near: float, p_above: float) -> float:
     """Representative % rainfall anomaly for display, inverted from P_below.
 
-    The inverse of ``probabilities_from_anomaly``'s P_below branch, so a distribution
-    built from an anomaly round-trips back to it (within clamping). Used to show a
-    single anomaly figure on the dashboard for a weighted-aggregated province.
+    The inverse of ``probabilities_from_anomaly``'s P_below branch (dead zone included),
+    so a distribution built from an anomaly round-trips back to it (within clamping).
+    Used to show a single anomaly figure for a weighted-aggregated province.
     """
     total = p_below + p_near + p_above
-    pb = (p_below / total) if total > 0 else _CLIMATOLOGICAL
-    return round((_CLIMATOLOGICAL - pb) / _BELOW_SLOPE, 1)
+    pb = (p_below / total) if total > 0 else _PB_BASE
+    if pb > _PB_BASE:
+        return round(-(_PB_DEADZONE + (pb - _PB_BASE) / _PB_DRY_SLOPE), 1)
+    if pb < _PB_BASE:
+        return round(_PB_DEADZONE + (_PB_BASE - pb) / _PB_WET_SLOPE, 1)
+    return 0.0
 
 
 def label_from_probabilities(p_below: float, p_near: float, p_above: float) -> str:
@@ -169,13 +186,13 @@ def label_from_probabilities(p_below: float, p_near: float, p_above: float) -> s
         return "Near Normal"
     pb, pa = p_below / total, p_above / total
     tilt = pb - pa
-    # "Much Below/Above Normal" is a strong PAGASA signal — reserve it for a dominant
-    # tail (≥0.80), so an ordinary El Niño "Below Normal" baseline (P_below ≈ 0.7–0.78)
-    # stays labelled "Below Normal" rather than being escalated on the dashboard.
+    # "Much Below/Above Normal" is a strong PAGASA signal (~−40% anomaly) — reserve it
+    # for a dominant tail (P_below ≥ 0.88), so the ordinary El Niño drought belt
+    # (P_below ≈ 0.56–0.87, i.e. −18…−30%) stays labelled "Below Normal" on the dashboard.
     if tilt >= 0.30:
-        return "Much Below Normal" if pb >= 0.80 else "Below Normal"
+        return "Much Below Normal" if pb >= 0.88 else "Below Normal"
     if tilt <= -0.30:
-        return "Much Above Normal" if pa >= 0.80 else "Above Normal"
+        return "Much Above Normal" if pa >= 0.88 else "Above Normal"
     return "Near Normal"
 
 

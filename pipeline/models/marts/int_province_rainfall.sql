@@ -41,18 +41,23 @@ station_based AS (
 ),
 
 -- Representative display fields from the weighted probability tilt. The anomaly is the
--- inverse of outlook.probabilities_from_anomaly's P_below branch (climatological 1/3,
--- slope 0.015); the label mirrors outlook.label_from_probabilities.
+-- inverse of outlook.probabilities_from_anomaly's dead-zone P_below branch (base 0.30,
+-- dead zone 8, dry slope 0.026 / wet slope 0.030); the label mirrors
+-- outlook.label_from_probabilities.
 station_scored AS (
     SELECT
         province_id,
         GREATEST(0.0, LEAST(1.0, rainfall_severity_weight)) AS rainfall_severity_weight,
         forecast_date,
-        ROUND((((1.0 / 3.0) - p_below) / 0.015)::numeric, 1) AS rainfall_anomaly_pct,
         CASE
-            WHEN (p_below - p_above) >= 0.30 AND p_below >= 0.80 THEN 'Much Below Normal'
+            WHEN p_below > 0.30 THEN ROUND((-(8.0 + (p_below - 0.30) / 0.026))::numeric, 1)
+            WHEN p_below < 0.30 THEN ROUND(( 8.0 + (0.30 - p_below) / 0.030)::numeric, 1)
+            ELSE 0.0
+        END AS rainfall_anomaly_pct,
+        CASE
+            WHEN (p_below - p_above) >= 0.30 AND p_below >= 0.88 THEN 'Much Below Normal'
             WHEN (p_below - p_above) >= 0.30                     THEN 'Below Normal'
-            WHEN (p_above - p_below) >= 0.30 AND p_above >= 0.80 THEN 'Much Above Normal'
+            WHEN (p_above - p_below) >= 0.30 AND p_above >= 0.88 THEN 'Much Above Normal'
             WHEN (p_above - p_below) >= 0.30                     THEN 'Above Normal'
             ELSE 'Near Normal'
         END AS seasonal_outlook

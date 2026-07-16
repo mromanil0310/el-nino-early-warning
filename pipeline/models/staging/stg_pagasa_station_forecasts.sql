@@ -2,12 +2,13 @@
 -- Staging: latest PAGASA per-station 3-way rainfall probability forecast, with the
 -- station's continuous drought severity.
 --
--- severity = P_below·1.0 + P_near·0.25 + P_above·0.0   (probabilities normalized to 1)
+-- severity = P_below  (near- and above-normal outcomes carry no drought risk;
+--            probabilities normalized to 1)
 --
--- This mirrors outlook.severity_from_probabilities (the Python source of truth). The
--- per-outcome weights {below 1.0, near 0.25, above 0.0} are the legacy categorical step
--- weights, so a "Below Normal"-tilted station reproduces ≈0.75 — a smooth generalization,
--- not a recalibration. One row per station (most recent forecast_date wins).
+-- This mirrors outlook.severity_from_probabilities (the Python source of truth): only
+-- below-normal rainfall drives El Niño drought risk, so severity is the probability of
+-- below-normal rainfall. A "Below Normal"-tilted station reproduces ≈0.75. One row per
+-- station (most recent forecast_date wins).
 
 WITH source AS (
     SELECT
@@ -34,9 +35,9 @@ SELECT
     near_normal_pct,
     above_normal_pct,
 
-    -- Continuous expected-drought severity in [0, 1].
+    -- Continuous drought severity in [0, 1] = P(below-normal rainfall).
     GREATEST(0.0, LEAST(1.0,
-        (below_normal_pct * 1.0 + near_normal_pct * 0.25 + above_normal_pct * 0.0)
+        below_normal_pct
         / NULLIF(below_normal_pct + near_normal_pct + above_normal_pct, 0)
     )) AS station_severity,
 
