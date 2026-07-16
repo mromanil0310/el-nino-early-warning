@@ -7,6 +7,17 @@ Weekly El Niño agricultural risk scores for 15 Luzon pilot provinces. Scrapes P
 
 ---
 
+## 🌐 Live System
+
+| | |
+|---|---|
+| 🌾 **Dashboard (web app)** | **[el-nino-early-warning.vercel.app](https://el-nino-early-warning.vercel.app)** |
+| 📖 **User guide** — how to read & use the dashboard | **[/USER_GUIDE](https://el-nino-early-warning.vercel.app/USER_GUIDE/)** |
+
+The dashboard is public and mobile-friendly, with a full English / Filipino toggle. Source for the guide: [`dashboard/public/USER_GUIDE.html`](dashboard/public/USER_GUIDE.html).
+
+---
+
 ## Architecture
 
 ```
@@ -25,7 +36,7 @@ PAGASA PDF → pagasa_scraper.py → Supabase (pagasa_forecasts)
 ```
 
 **Pipeline schedule:** Every Monday 06:00 PHT (Sunday 22:00 UTC)  
-**Deployed on:** Railway.app (pipeline) + Vercel (dashboard) + Supabase (data)
+**Deployed on:** GitHub Actions (weekly pipeline) + Vercel (dashboard) + Supabase (data)
 
 ---
 
@@ -131,19 +142,11 @@ El-Nino-Early-Warning/
 4. Seed crop calendars: **Table Editor → crop_calendars → Insert from CSV → `seeds/crop_calendars.csv`**
 5. Copy your `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_ANON_KEY`, and DB connection details
 
-### 2. Railway.app (Pipeline)
+### 2. GitHub Actions (Pipeline)
 
-1. New project → Deploy from GitHub
-2. Set all environment variables from `.env.example` (excluding NEXT_PUBLIC_ ones)
-3. Add a PostgreSQL service or let Airflow use Supabase directly
-4. Set start command: `airflow webserver` (for webserver) / `airflow scheduler` (for scheduler)
+The weekly pipeline runs as a scheduled GitHub Actions workflow — no separate server needed. See [`.github/workflows/pipeline.yml`](.github/workflows/pipeline.yml): it scrapes PAGASA → runs the dbt risk-score models → generates AI advisories → sends SMS → triggers a Vercel rebuild, every Monday 06:00 PHT, and is also runnable on demand via **workflow_dispatch** (with a `dry_run` input that skips SMS).
 
-Or for a minimal Railway deploy without Airflow, use Railway's **Cron** service:
-
-```
-# Weekly Monday 06:00 PHT cron (Railway cron syntax)
-0 22 * * 0  cd /app && python pipeline/scripts/pagasa_scraper.py && dbt run --profiles-dir pipeline && python pipeline/scripts/digest_generator.py && python pipeline/sms/send_sms.py
-```
+Set the required secrets in **Settings → Secrets and variables → Actions**: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `SUPABASE_DB_HOST`, `SUPABASE_DB_USER`, `SUPABASE_DB_PASSWORD`, `ANTHROPIC_API_KEY`, `SEMAPHORE_API_KEY`, and `VERCEL_DEPLOY_HOOK_URL` (see `.env.example`).
 
 ### 3. Vercel (Dashboard)
 
@@ -198,11 +201,11 @@ dbt run --profiles-dir . --target dev
 | Service | Cost |
 |---------|------|
 | Supabase (free tier) | ₱0 |
-| Railway.app (Hobby) | ~₱200 |
+| GitHub Actions (weekly pipeline, public repo) | ₱0 |
 | Vercel (free tier) | ₱0 |
 | Claude haiku advisories (15 provinces/week × 4 weeks) | ~₱24 |
 | Semaphore.ph SMS (100 contacts × 4 weeks × ₱0.65) | ~₱260 |
-| **Total** | **~₱484/month** |
+| **Total** | **~₱284/month** |
 
 ---
 
