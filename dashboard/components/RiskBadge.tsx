@@ -1,4 +1,5 @@
 import React from 'react'
+import { useLanguage } from '../lib/i18n'
 
 interface RiskBadgeProps {
   level: 'High' | 'Medium' | 'Low'
@@ -19,9 +20,10 @@ const SIZE_STYLES: Record<string, string> = {
 }
 
 export default function RiskBadge({ level, score, size = 'md' }: RiskBadgeProps) {
+  const { t } = useLanguage()
   return (
     <span className={`inline-flex items-center gap-1 ${LEVEL_STYLES[level]} ${SIZE_STYLES[size]}`}>
-      <span>{level}</span>
+      <span>{t('level.' + level)}</span>
       {score !== undefined && (
         <span className="opacity-70">({score.toFixed(0)})</span>
       )}

@@ -1,11 +1,13 @@
 import React from 'react'
 import { RiskScore } from '../lib/supabase'
+import { useLanguage } from '../lib/i18n'
 
 interface RiskSummaryBarProps {
   scores: RiskScore[]
 }
 
 export default function RiskSummaryBar({ scores }: RiskSummaryBarProps) {
+  const { t } = useLanguage()
   const high = scores.filter((s) => s.risk_level === 'High').length
   const medium = scores.filter((s) => s.risk_level === 'Medium').length
   const low = scores.filter((s) => s.risk_level === 'Low').length
@@ -15,21 +17,19 @@ export default function RiskSummaryBar({ scores }: RiskSummaryBarProps) {
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h2 className="text-sm font-semibold text-gray-700 mb-3">
-        Risk summary — {total} crop {total === 1 ? 'assessment' : 'assessments'} this week
-      </h2>
+      <h2 className="text-sm font-semibold text-gray-700 mb-3">{t('summary.heading', { n: total })}</h2>
       <div className="flex gap-4">
         <div className="flex-1 text-center">
           <div className="text-2xl font-bold text-red-600">{high}</div>
-          <div className="text-xs text-gray-500">High Risk (&gt;65)</div>
+          <div className="text-xs text-gray-500">{t('summary.high')}</div>
         </div>
         <div className="flex-1 text-center">
           <div className="text-2xl font-bold text-yellow-600">{medium}</div>
-          <div className="text-xs text-gray-500">Medium (35–65)</div>
+          <div className="text-xs text-gray-500">{t('summary.medium')}</div>
         </div>
         <div className="flex-1 text-center">
           <div className="text-2xl font-bold text-green-600">{low}</div>
-          <div className="text-xs text-gray-500">Low (&lt;35)</div>
+          <div className="text-xs text-gray-500">{t('summary.low')}</div>
         </div>
       </div>
 
