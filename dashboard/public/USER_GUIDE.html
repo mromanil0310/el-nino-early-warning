@@ -171,6 +171,7 @@
       <li><a href="#cadence">How often this updates</a></li>
       <li><a href="#disclaimer">What this is — and isn't</a></li>
       <li><a href="#audience">Who this is for</a></li>
+      <li><a href="#roadmap">On the roadmap</a></li>
     </ol>
   </div>
 
@@ -191,6 +192,10 @@
         <div class="callout tip">
           <b>🔄 It refreshes on its own</b>
           Every time you load the page, you see the latest week's risk scores. There's nothing to manually sync.
+        </div>
+        <div class="callout tip">
+          <b>🌐 English or Filipino — your choice</b>
+          A language switch in the top-right corner flips the <em>entire</em> dashboard — headings, labels, and every advisory — between English and Filipino. Your choice is remembered on your device.
         </div>
       </div>
       <div>
@@ -256,6 +261,10 @@
           <b>👆 It's a shortcut, not just a picture</b>
           If you already know which province you're checking on, clicking its dot is faster than scrolling the full list.
         </div>
+        <div class="callout tip">
+          <b>📱 On a phone, the map starts tucked away</b>
+          On small screens the map sits behind a <span class="k">Show risk map</span> toggle, so the province cards are right at your thumb — tap it open only when you want the map view.
+        </div>
       </div>
       <div>
         <div class="mock">
@@ -284,6 +293,7 @@
       <div>
         <ul class="points">
           <li><strong>Search box</strong> — type a province name to jump straight to it.</li>
+          <li><strong>📍 Find my province</strong> — uses your device's location to jump to the nearest monitored province, no typing needed (handy on mobile). If you decline the location prompt, just use the search box instead.</li>
           <li><strong>Risk level chips</strong> — <span class="k">All / High / Medium / Low</span>.</li>
           <li><strong>Crop chips</strong> — <span class="k">All Crops / Palay / Corn</span>.</li>
           <li>The count on the right (<span class="k">"N of M shown"</span>) always tells you how filtered the view currently is.</li>
@@ -319,8 +329,9 @@
           <li><strong>Show advisory ▼</strong> — expands to reveal:
             <ul class="points" style="margin-top:8px;">
               <li>An 8-week <strong>risk trend</strong> sparkline, so you can see if things are getting better or worse.</li>
-              <li>A 3-sentence AI-generated advisory, toggleable between <span class="k">English</span> and <span class="k">Filipino</span> — your language choice is remembered next time.</li>
+              <li>A 3-sentence AI-generated advisory in <span class="k">English</span> or <span class="k">Filipino</span> — it follows the dashboard-wide language switch in the top-right corner.</li>
               <li>A ready-to-send <strong>SMS text</strong> version, already trimmed to fit one message.</li>
+              <li>A <strong>Share this advisory</strong> button — opens your phone's share sheet (or copies the text on desktop) so you can forward the advisory, in your chosen language, straight to a group chat or SMS.</li>
             </ul>
           </li>
         </ul>
@@ -339,8 +350,8 @@
               <div>Rainfall: <strong>-28%</strong></div>
             </div>
             <div class="m-card ok" style="font-size:10px;">
-              <div style="margin-bottom:4px;"><span class="m-chip sel" style="padding:2px 8px;">English</span><span class="m-chip" style="padding:2px 8px;">Filipino</span></div>
               Prioritize irrigation this week — reproductive-stage rice is most vulnerable to a rainfall deficit right now.
+              <div style="margin-top:6px;"><span class="m-chip" style="padding:2px 8px;">↗ Share this advisory</span></div>
             </div>
           </div>
         </div>
@@ -443,6 +454,25 @@
     <div class="callout">
       <b>🌱 Pilot scope</b>
       Currently covers Luzon pilot provinces, palay and corn. All 82 Philippine provinces are seeded in the system ahead of the next expansion phase.
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="roadmap">
+    <h2 class="sec-title"><span class="step-num">10</span>On the roadmap</h2>
+    <p class="sec-intro">Planned improvements — <strong>not yet available</strong>, listed so you know where this is heading.</p>
+    <ul class="points">
+      <li><strong>Sharper per-province accuracy</strong> — risk scores tuned to each province's own PAGASA weather stations, so neighbouring provinces get their own distinct number instead of sharing one.</li>
+      <li><strong>Nationwide coverage</strong> — all 82 provinces, not just the Luzon pilot.</li>
+      <li><strong>More crops</strong> — beyond palay and corn (for example sugarcane and high-value vegetables).</li>
+      <li><strong>More languages</strong> — advisories in Ilocano and Cebuano, alongside English and Filipino.</li>
+      <li><strong>Two-way SMS</strong> — cooperatives can reply to an alert to confirm they acted, so the system can track real impact on the ground.</li>
+      <li><strong>High-risk alerts</strong> — opt in to get an email or notification the moment a province you follow crosses into High risk, instead of checking manually.</li>
+      <li><strong>Printable weekly advisory</strong> — one tap to a print-ready PDF for briefings and barangay bulletin boards.</li>
+    </ul>
+    <div class="callout">
+      <b>💡 Have a request?</b>
+      This is a pilot, and the roadmap is shaped by the LGU and cooperative officers using it. If something here would help your work — or something's missing — that feedback is what decides what gets built next.
     </div>
   </section>
 
