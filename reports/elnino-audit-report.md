@@ -1,6 +1,24 @@
 # El Niño Early Warning — Audit & Backlog Report
 
-_Last updated: 2026-07-11. Source of truth for bugs, fixes, and the prioritized backlog. Newest dated section is authoritative; older sections retained for history._
+_Last updated: 2026-07-16. Source of truth for bugs, fixes, and the prioritized backlog. Newest dated section is authoritative; older sections retained for history._
+
+## 🌏 Dashboard mass-appeal pass — 2026-07-16
+
+The dashboard was officer-facing and English-only in its chrome (only the advisories were bilingual), desktop-shaped, and offered no way to spread an advisory. This pass broadens it toward the farmers and barangay officials it ultimately serves. **All changes verified in-browser against the built static export and confirmed live on Vercel via content-hash match.**
+
+**Defects fixed:**
+- **`TrendIcon` was invisible to screen-reader / colorblind users** — the ↑↓→ arrows carried meaning only through glyph + color + an unreliable `<span title>`. Added `role="img"` + `aria-label` (glyph now `aria-hidden`).
+- **Map tap did nothing on mobile** — tapping a province dot filtered the card list, but the list sits far below the map on a phone, so it looked like a no-op. Now scrolls the filtered result into view. (Subtle bug found en route: `behavior:'smooth'` is a silent no-op under reduced-motion / the render env; the scroll now runs from a post-commit effect with instant behavior so it lands reliably.)
+
+**Mass-appeal features (ELN-020 partial — Filipino localization + reach):**
+- **Share advisory** — each expanded advisory has a "Share this advisory" action: native share sheet on mobile → clipboard fallback on desktop, includes a link back so recipients can look up their own province. Turns each dashboard viewer into a distribution point for barangay group chats / SMS.
+- **Full Filipino UI** (`dashboard/lib/i18n.tsx`) — a shared language context + EN/FIL header toggle now drives the **entire** interface and the advisory text, not just the advisory column. Persists to localStorage, sets `<html lang>`, migrates the legacy per-card `advisoryLang` key, starts from `en` to avoid hydration mismatch. Technical data values (PAGASA outlook labels, crop stages, region codes, `wet`/`dry` season) are deliberately left untranslated. The redundant per-card language toggle was removed — one global switch controls everything.
+- **Mobile map redesign** — the tall dot-map is collapsed behind a "Show risk map" toggle on phones so the summary + actionable cards surface first; on desktop (`sm+`) the map always shows, unchanged.
+- **Find my province** — geolocation button that jumps to the nearest monitored province, with localized graceful fallbacks (denied / unavailable / none-nearby).
+
+Commits: `5950704` (share + a11y + mobile-tap), `db3a294` (Filipino UI + mobile map + locate-me). Dashboard `tsc` + `next build` + `next lint` green; 114 pipeline tests still passing (dashboard-only change).
+
+**Not touched (deliberate):** every province still scores identically (`38 · Medium`) because the station→province rainfall weighting isn't wired into the risk model yet — that's the scoped-but-not-started PAGASA station-level bulletin rework, a real architecture change, not a quick fix.
 
 ## 🚀 Deployment progress — 2026-07-11
 
