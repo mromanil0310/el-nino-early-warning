@@ -176,7 +176,11 @@ def parse_outlook_from_pdf(pdf_bytes: bytes) -> dict[str, dict]:
 
 # ELN-004: the built-in fallback below is a fixed baseline — it does NOT track new
 # PAGASA bulletins. Flag it as stale so the pipeline never silently scores on old data.
-MANUAL_OVERRIDE_AS_OF = date(2026, 6, 1)   # PAGASA baseline, June 2026
+# Re-verified 2026-07-17 against PAGASA: El Niño is present and intensifying (strong El
+# Niño ~69% likely by ASO 2026), below-normal rainfall remains the expected impact over
+# much of the country — so the below-normal Luzon gradient below is still valid. Bump
+# this date each time the outlook is re-confirmed against the current PAGASA advisory.
+MANUAL_OVERRIDE_AS_OF = date(2026, 7, 17)   # PAGASA outlook re-verified, July 2026
 MANUAL_OVERRIDE_MAX_AGE_DAYS = 45          # PAGASA refreshes seasonal outlooks ~monthly
 
 
@@ -197,10 +201,12 @@ def get_manual_overrides() -> tuple[dict[str, dict], str]:
         except Exception as e:
             log.error(f"Failed to parse PAGASA_MANUAL_OVERRIDE: {e}")
 
-    # Default: June 2026 El Niño baseline (79% probability, Below Normal for most of Luzon)
-    # Source: PAGASA El Niño Watch April 2026
+    # Default: El Niño baseline, Below Normal for most of Luzon. Re-verified 2026-07-17
+    # against PAGASA (El Niño present + intensifying, strong El Niño ~69% likely by ASO
+    # 2026; below-normal rainfall the expected impact). Values are the standing Luzon
+    # drought gradient; refresh them if PAGASA issues materially different regional numbers.
     default_overrides = {
-        "pangasinan": {"seasonal_outlook": "Below Normal", "rainfall_anomaly_pct": -28.0, "raw_text": "PAGASA El Niño Watch April 2026 — 79% probability June-August 2026"},
+        "pangasinan": {"seasonal_outlook": "Below Normal", "rainfall_anomaly_pct": -28.0, "raw_text": "PAGASA El Niño advisory, re-verified July 2026 — strong El Niño likely by ASO 2026"},
         "ilocos norte": {"seasonal_outlook": "Below Normal", "rainfall_anomaly_pct": -25.0, "raw_text": "PAGASA baseline June 2026"},
         "ilocos sur": {"seasonal_outlook": "Below Normal", "rainfall_anomaly_pct": -25.0, "raw_text": "PAGASA baseline June 2026"},
         "la union": {"seasonal_outlook": "Below Normal", "rainfall_anomaly_pct": -22.0, "raw_text": "PAGASA baseline June 2026"},

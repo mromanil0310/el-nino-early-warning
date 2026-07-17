@@ -23,7 +23,9 @@ except ImportError:  # pragma: no cover - import path differs under Airflow
     from scripts.outlook import probabilities_from_anomaly
 
 # Baseline as-of date + max age mirror pagasa_scraper's province-level staleness guard.
-STATION_BASELINE_AS_OF = "2026-06-01"
+# Re-verified 2026-07-17 against PAGASA (El Niño present + intensifying; below-normal
+# rainfall the expected impact) — bump this each time the outlook is re-confirmed.
+STATION_BASELINE_AS_OF = "2026-07-17"
 
 # station_code → expected seasonal % rainfall anomaly (negative = drier than normal).
 # Covers the 13 synoptic stations that serve the 15 Luzon pilot provinces
