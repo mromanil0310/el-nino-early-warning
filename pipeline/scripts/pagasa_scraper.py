@@ -260,9 +260,9 @@ def write_forecasts_to_supabase(
 # ─── ELN-031: per-station probability forecasts ──────────────────────────────
 # PAGASA issues rainfall outlooks per synoptic station as Below/Near/Above probabilities.
 # We write them to pagasa_station_forecasts; the dbt layer (int_province_rainfall) weight-
-# averages them to the province level so provinces differentiate. Parsing the real station
-# bulletin is best-effort (unverified format) — when it yields too few stations we fall
-# back to the station baseline, exactly like the province-level path.
+# averages them to the province level so provinces differentiate. The source is the
+# grounded station baseline (station_baseline.py); the live-bulletin parser is opt-in via
+# PAGASA_STATION_PARSE=true and OFF by default until validated (see build_station_probabilities).
 STATION_BASELINE_MAX_AGE_DAYS = 45
 
 
@@ -294,17 +294,27 @@ def build_station_probabilities(
 ) -> tuple[dict[str, tuple[float, float, float]], str]:
     """Return ({station_code: (below%, near%, above%)}, provenance).
 
-    Tries to parse the bulletin; if fewer than 5 stations parse, fills the rest from the
-    station baseline. Provenance is "pdf" when parsing carried it, else "baseline".
+    Uses the grounded station baseline by default. The best-effort live-bulletin parser
+    (parse_station_probabilities_from_text) is DISABLED unless PAGASA_STATION_PARSE=true,
+    because it is UNVERIFIED against a real PAGASA station bulletin and was observed to
+    latch onto unrelated numbers on the page — writing inverted, wet-looking forecasts
+    (e.g. Pangasinan "Above Normal 62%") that flipped the live El Niño drought scores.
+    Only enable the parser once it has been validated against a real station bulletin;
+    until then the baseline (re-verified against the current PAGASA outlook) is the
+    trusted source. Provenance is "pdf" only if the parser actually contributed.
     """
     stations = [(r["station_code"], r["name"]) for r in registry]
-    parsed = parse_station_probabilities_from_text(full_text, stations) if full_text else {}
-    provenance = "pdf"
-    if len(parsed) < 5:
-        provenance = "baseline"
-        for code, (pb, pn, pa) in station_baseline_probabilities().items():
-            if code not in parsed:
-                parsed[code] = (round(pb * 100, 1), round(pn * 100, 1), round(pa * 100, 1))
+    use_parser = os.getenv("PAGASA_STATION_PARSE", "false").lower() == "true"
+    parsed = (
+        parse_station_probabilities_from_text(full_text, stations)
+        if (use_parser and full_text)
+        else {}
+    )
+    provenance = "pdf" if parsed else "baseline"
+    # Baseline fills every station the parser didn't (all of them, by default).
+    for code, (pb, pn, pa) in station_baseline_probabilities().items():
+        if code not in parsed:
+            parsed[code] = (round(pb * 100, 1), round(pn * 100, 1), round(pa * 100, 1))
     return parsed, provenance
 
 
