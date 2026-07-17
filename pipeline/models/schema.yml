@@ -26,6 +26,34 @@ models:
               values: [0.0, 0.25, 0.75, 1.0]
               quote: false
 
+  - name: stg_pagasa_station_forecasts
+    description: "ELN-031: latest PAGASA per-station 3-way rainfall probability + continuous station drought severity."
+    columns:
+      - name: station_id
+        tests:
+          - not_null
+      - name: station_severity
+        description: "Expected drought severity in [0,1] from the station's Below/Near/Above probabilities. Continuous (no accepted_values); range checked by assert_rainfall_severity_in_range.sql."
+        tests:
+          - not_null
+
+  - name: int_province_rainfall
+    description: "ELN-031: weighted station→province rainfall severity (province_station_mapping weights), with a legacy categorical fallback. Feeds risk_scores."
+    columns:
+      - name: province_id
+        tests:
+          - not_null
+      - name: rainfall_severity_weight
+        description: "Continuous 0.0 (wet) → 1.0 (severe drought), weight-averaged across stations. Range checked by assert_rainfall_severity_in_range.sql."
+        tests:
+          - not_null
+      - name: seasonal_outlook
+        description: "Representative label from the weighted probability tilt (display only)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Much Below Normal', 'Below Normal', 'Near Normal', 'Above Normal', 'Much Above Normal']
+
   - name: stg_crop_calendars
     description: "Current crop growth stage + PhilRice El Niño vulnerability per province × crop."
     columns:
@@ -67,10 +95,9 @@ models:
               values: [0.3, 0.4, 0.5, 0.7, 1.0]
               quote: false
       - name: rainfall_severity_weight
+        description: "ELN-031: now CONTINUOUS (weighted station→province aggregate), no longer one of 4 discrete steps. Range 0–1 checked by assert_rainfall_severity_in_range.sql."
         tests:
-          - accepted_values:
-              values: [0.0, 0.25, 0.75, 1.0]
-              quote: false
+          - not_null
 
 # Seed tests — PAGASA station registry + province-station mapping (Phase 2 Build 3).
 # Weight-sum and full-coverage invariants live in the singular tests

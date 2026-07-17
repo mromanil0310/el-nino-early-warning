@@ -45,11 +45,23 @@ PAGASA_BULLETIN_URL = os.getenv(
 # most specific label first so "Much Below Normal" is never downgraded to "Below
 # Normal". Robust import: works both run-as-script and imported as `scripts.pagasa_scraper`.
 try:
-    from outlook import OUTLOOK_TO_ANOMALY, OUTLOOK_NORMALIZATION, match_outlook
+    from outlook import (
+        OUTLOOK_TO_ANOMALY,
+        OUTLOOK_NORMALIZATION,
+        match_outlook,
+        parse_station_probabilities_from_text,
+    )
     from retry_util import retry_call
+    from station_baseline import STATION_BASELINE_AS_OF, station_baseline_probabilities
 except ImportError:  # pragma: no cover - import path differs under Airflow
-    from scripts.outlook import OUTLOOK_TO_ANOMALY, OUTLOOK_NORMALIZATION, match_outlook
+    from scripts.outlook import (
+        OUTLOOK_TO_ANOMALY,
+        OUTLOOK_NORMALIZATION,
+        match_outlook,
+        parse_station_probabilities_from_text,
+    )
     from scripts.retry_util import retry_call
+    from scripts.station_baseline import STATION_BASELINE_AS_OF, station_baseline_probabilities
 
 # Province names → province_id, generated from the canonical seed CSV (all 82
 # provinces + PAGASA aliases). Containment-aware matching prevents "south cotabato"
@@ -239,6 +251,113 @@ def write_forecasts_to_supabase(
     return rows_written
 
 
+# ─── ELN-031: per-station probability forecasts ──────────────────────────────
+# PAGASA issues rainfall outlooks per synoptic station as Below/Near/Above probabilities.
+# We write them to pagasa_station_forecasts; the dbt layer (int_province_rainfall) weight-
+# averages them to the province level so provinces differentiate. Parsing the real station
+# bulletin is best-effort (unverified format) — when it yields too few stations we fall
+# back to the station baseline, exactly like the province-level path.
+STATION_BASELINE_MAX_AGE_DAYS = 45
+
+
+def _extract_full_text(pdf_bytes: bytes) -> str:
+    """Concatenate the text of every PDF page (lowercased). '' on failure."""
+    try:
+        parts = []
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            for page in pdf.pages:
+                parts.append((page.extract_text() or "").lower())
+        return "\n".join(parts)
+    except Exception as e:
+        log.error(f"Station PDF text extraction failed: {e}")
+        return ""
+
+
+def fetch_station_registry() -> list[dict]:
+    """PAGASA synoptic station registry (id, station_code, name) from Supabase."""
+    try:
+        res = supabase.table("pagasa_stations").select("id, station_code, name").execute()
+        return res.data or []
+    except Exception as e:
+        log.error(f"Failed to fetch station registry: {e}")
+        return []
+
+
+def build_station_probabilities(
+    full_text: str, registry: list[dict]
+) -> tuple[dict[str, tuple[float, float, float]], str]:
+    """Return ({station_code: (below%, near%, above%)}, provenance).
+
+    Tries to parse the bulletin; if fewer than 5 stations parse, fills the rest from the
+    station baseline. Provenance is "pdf" when parsing carried it, else "baseline".
+    """
+    stations = [(r["station_code"], r["name"]) for r in registry]
+    parsed = parse_station_probabilities_from_text(full_text, stations) if full_text else {}
+    provenance = "pdf"
+    if len(parsed) < 5:
+        provenance = "baseline"
+        for code, (pb, pn, pa) in station_baseline_probabilities().items():
+            if code not in parsed:
+                parsed[code] = (round(pb * 100, 1), round(pn * 100, 1), round(pa * 100, 1))
+    return parsed, provenance
+
+
+def write_station_forecasts_to_supabase(
+    station_probs: dict[str, tuple[float, float, float]],
+    registry: list[dict],
+    forecast_date: date,
+    source_bulletin: str = "",
+) -> int:
+    """Upsert per-station probability forecasts. Returns rows written."""
+    code_to_id = {r["station_code"]: r["id"] for r in registry}
+    rows_written = 0
+    for code, (pb, pn, pa) in station_probs.items():
+        station_id = code_to_id.get(code)
+        if not station_id:
+            log.warning(f"Station code not in registry: {code}")
+            continue
+        try:
+            supabase.table("pagasa_station_forecasts").upsert({
+                "station_id": station_id,
+                "forecast_date": forecast_date.isoformat(),
+                "below_normal_pct": pb,
+                "near_normal_pct": pn,
+                "above_normal_pct": pa,
+                "source_bulletin": source_bulletin or PAGASA_BULLETIN_URL,
+            }, on_conflict="station_id,forecast_date").execute()
+            rows_written += 1
+        except Exception as e:
+            log.error(f"  Failed to write station forecast for {code}: {e}")
+    return rows_written
+
+
+def run_station_forecasts(pdf_bytes: bytes | None, forecast_date: date) -> int:
+    """Write per-station probability forecasts (parsed or baseline). Returns rows written."""
+    registry = fetch_station_registry()
+    if not registry:
+        log.warning("No station registry — skipping station forecasts (apply migration 006/008?)")
+        return 0
+    full_text = _extract_full_text(pdf_bytes) if pdf_bytes else ""
+    station_probs, provenance = build_station_probabilities(full_text, registry)
+
+    if provenance == "baseline":
+        age = (date.today() - date.fromisoformat(STATION_BASELINE_AS_OF)).days
+        if age > STATION_BASELINE_MAX_AGE_DAYS:
+            log.error(
+                "STALE STATION BASELINE: bulletin parse yielded too few stations and the "
+                "baseline is %d days old (as-of %s, max %d). Refresh station_baseline.py.",
+                age, STATION_BASELINE_AS_OF, STATION_BASELINE_MAX_AGE_DAYS,
+            )
+        else:
+            log.warning("Using station baseline (%d days old) for %d stations.", age, len(station_probs))
+    else:
+        log.info("Parsed %d stations from bulletin.", len(station_probs))
+
+    rows = write_station_forecasts_to_supabase(station_probs, registry, forecast_date)
+    log.info("Station forecast provenance: %s (%d stations written)", provenance, rows)
+    return rows
+
+
 def run(forecast_date: date | None = None) -> int:
     """
     Main entry point. Returns number of provinces updated.
@@ -296,6 +415,12 @@ def run(forecast_date: date | None = None) -> int:
         source_bulletin=PAGASA_BULLETIN_URL,
     )
     log.info(f"PAGASA scraper complete: {rows} provinces updated")
+
+    # ELN-031: per-station probability forecasts (weighted to provinces in dbt). The
+    # province-level write above remains the fallback for provinces without station data.
+    station_rows = run_station_forecasts(pdf_bytes, forecast_date)
+    log.info(f"PAGASA station forecasts: {station_rows} stations updated")
+
     return rows
 
 

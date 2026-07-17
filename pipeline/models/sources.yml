@@ -51,6 +51,37 @@ sources:
           - name: rainfall_anomaly_pct
             description: "Numeric rainfall anomaly estimate (% vs normal). Negative = drier than normal."
 
+      - name: pagasa_station_forecasts
+        description: "ELN-031: PAGASA per-station 3-way seasonal rainfall probability (Below/Near/Above Normal %), written by pagasa_scraper.py. Aggregated to provinces by int_province_rainfall via province_station_mapping weights."
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+          - name: station_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('elnino', 'pagasa_stations')
+                  field: id
+          - name: forecast_date
+            tests:
+              - not_null
+          - name: below_normal_pct
+            description: "Probability (%) of below-normal seasonal rainfall"
+          - name: near_normal_pct
+            description: "Probability (%) of near-normal seasonal rainfall"
+          - name: above_normal_pct
+            description: "Probability (%) of above-normal seasonal rainfall"
+
+      - name: pagasa_stations
+        description: "DOST-PAGASA synoptic station registry (migration 006). 57 operational stations."
+        columns:
+          - name: id
+            tests:
+              - unique
+              - not_null
+
       - name: crop_calendars
         description: "PhilRice crop calendar by province, crop, and season. 35 rows covering 15 provinces × palay wet/dry + corn."
         columns:

@@ -18,32 +18,14 @@ from datetime import date, timedelta
 
 sys.path.insert(0, os.path.dirname(__file__))
 from crop_stage import derive_stage  # pure reference for stg_crop_calendars.sql
+from outlook import (  # pure reference for the ELN-031 station rainfall model
+    anomaly_from_probabilities,
+    label_from_probabilities,
+    severity_from_probabilities,
+)
+from station_baseline import station_baseline_probabilities
 
 SEEDS = os.path.join(os.path.dirname(__file__), "..", "seeds")
-
-# PAGASA El Niño Watch (April 2026) baseline — 79% probability Jun–Aug 2026.
-# Mirrors pagasa_scraper.get_manual_overrides(): (outlook, rainfall_anomaly_pct).
-FORECAST: dict[int, tuple[str, float]] = {
-    1: ("Below Normal", -28.0), 2: ("Below Normal", -25.0), 3: ("Below Normal", -25.0),
-    4: ("Below Normal", -22.0), 5: ("Below Normal", -30.0), 6: ("Below Normal", -27.0),
-    7: ("Below Normal", -25.0), 8: ("Below Normal", -22.0), 9: ("Below Normal", -24.0),
-    10: ("Below Normal", -22.0), 11: ("Near Normal", -10.0), 12: ("Near Normal", -8.0),
-    13: ("Near Normal", -5.0), 14: ("Below Normal", -20.0), 15: ("Below Normal", -18.0),
-}
-
-
-def severity_weight(outlook: str) -> float:
-    """Mirror of stg_pagasa_forecasts.sql (most-specific label first)."""
-    o = outlook.lower()
-    if "much below" in o:
-        return 1.0
-    if "below" in o:
-        return 0.75
-    if "much above" in o or "above" in o:
-        return 0.0
-    if "near" in o:
-        return 0.25
-    return 0.25
 
 
 def classify(score: float) -> str:
@@ -55,15 +37,50 @@ def load_csv(name: str) -> list[dict]:
         return list(csv.DictReader(f))
 
 
-def compute_scores(as_of: date, forecast: dict[int, tuple[str, float]] = FORECAST) -> list[dict]:
+def province_rainfall() -> dict[int, dict]:
+    """Reproduce int_province_rainfall.sql over the seeds + station baseline (no DB).
+
+    Weight-averages the per-station probability forecasts up to each province via
+    province_station_mapping, then derives severity + a display anomaly/label — exactly
+    the ELN-031 dbt path. Returns {province_id: {weight, anomaly, outlook}}.
+    """
+    id_to_code = {int(s["id"]): s["station_code"] for s in load_csv("pagasa_stations.csv")}
+    station_probs = station_baseline_probabilities()  # station_code → (pb, pn, pa) fractions
+
+    acc: dict[int, dict] = {}
+    for m in load_csv("province_station_mapping.csv"):
+        code = id_to_code.get(int(m["station_id"]))
+        if code not in station_probs:
+            continue  # station has no forecast (non-pilot) — mirrors the INNER JOIN
+        pb, pn, pa = station_probs[code]
+        w = float(m["weight"])
+        a = acc.setdefault(int(m["province_id"]), {"sev": 0.0, "pb": 0.0, "pa": 0.0})
+        a["sev"] += w * severity_from_probabilities(pb, pn, pa)
+        a["pb"] += w * pb
+        a["pa"] += w * pa
+
+    out: dict[int, dict] = {}
+    for pid, a in acc.items():
+        pb, pa = a["pb"], a["pa"]
+        pn = max(0.0, 1.0 - pb - pa)
+        out[pid] = {
+            "weight": min(1.0, max(0.0, a["sev"])),
+            "anomaly": anomaly_from_probabilities(pb, pn, pa),
+            "outlook": label_from_probabilities(pb, pn, pa),
+        }
+    return out
+
+
+def compute_scores(as_of: date, rainfall: dict[int, dict] | None = None) -> list[dict]:
     """Reproduce the risk_scores.sql output for `as_of` over the seed data (no DB).
 
     Applies the same staging filter (active crops only), off-season exclusion
-    (vulnerability > 0), formula, and thresholds the dbt models use. Returns the rows
-    sorted highest-risk first. Pure + importable, so it backs both the preview and the
-    integration test.
+    (vulnerability > 0), the ELN-031 weighted station→province rainfall severity, the
+    formula, and thresholds the dbt models use. Returns rows sorted highest-risk first.
+    Pure + importable, so it backs both the preview and the integration test.
     """
     provinces = {int(p["id"]): p["name"] for p in load_csv("provinces.csv")}
+    rain = rainfall if rainfall is not None else province_rainfall()
     rows = []
     for c in load_csv("crop_calendars.csv"):
         ps, pe = date.fromisoformat(c["planting_start"]), date.fromisoformat(c["planting_end"])
@@ -75,12 +92,14 @@ def compute_scores(as_of: date, forecast: dict[int, tuple[str, float]] = FORECAS
         if vuln <= 0:  # risk_scores.sql excludes off-season (WHERE vulnerability_index > 0)
             continue
         pid = int(c["province_id"])
-        outlook, anomaly = forecast[pid]
-        weight = severity_weight(outlook)
+        pr = rain.get(pid)
+        if pr is None:  # province with no station forecast — skipped like the INNER JOIN
+            continue
+        weight = pr["weight"]
         score = round(weight * vuln * 100, 1)
         rows.append({
             "province": provinces[pid], "province_id": pid, "crop": c["crop"], "season": c["season"],
-            "outlook": outlook, "anomaly": anomaly, "stage": stage, "vuln": vuln,
+            "outlook": pr["outlook"], "anomaly": pr["anomaly"], "stage": stage, "vuln": vuln,
             "weight": weight, "score": score, "level": classify(score),
         })
     rows.sort(key=lambda r: (-r["score"], r["province"]))

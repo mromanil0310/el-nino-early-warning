@@ -24,6 +24,11 @@
     ]
 ) }}
 
+-- ELN-031: rainfall severity now comes from int_province_rainfall — the weighted
+-- station→province aggregation of PAGASA's per-station probability forecasts — instead
+-- of the flat per-province categorical step weight. Same columns, so the formula and all
+-- downstream (dashboard, digests) are unchanged; only the severity input is now
+-- continuous and province-differentiating.
 WITH forecasts AS (
     SELECT
         province_id,
@@ -31,7 +36,7 @@ WITH forecasts AS (
         seasonal_outlook,
         rainfall_anomaly_pct,
         forecast_date
-    FROM {{ ref('stg_pagasa_forecasts') }}
+    FROM {{ ref('int_province_rainfall') }}
 ),
 
 crop_stages AS (

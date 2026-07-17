@@ -2,6 +2,24 @@
 
 _Last updated: 2026-07-16. Source of truth for bugs, fixes, and the prioritized backlog. Newest dated section is authoritative; older sections retained for history._
 
+## 🎯 ELN-031 — station-weighted, probability-based risk model — 2026-07-16 (branch `feat/station-weighted-risk`)
+
+**The core accuracy fix.** Every province was scoring an identical `38 · Medium` because the risk formula's `rainfall_severity_weight` was a categorical STEP function — "Below Normal" → 0.75 for *every* province — while the differentiated per-province anomalies (−30%…−5%) were stored but never entered the score. The station-mapping tables (migration 006) existed but were never wired into scoring.
+
+**What changed:**
+- **Continuous severity from probabilities** (`outlook.py`, ELN-031): PAGASA issues rainfall outlooks per synoptic station as a 3-way probability distribution (P_below / P_near / P_above). Severity is now the *expected drought severity* over that distribution: `severity = P_below·1.0 + P_near·0.25 + P_above·0.0`. The per-outcome weights are exactly the legacy step weights, so a canonical "Below Normal" distribution reproduces ≈0.75 — a smooth generalization, not a recalibration. Continuous ⇒ provinces differentiate.
+- **Per-station forecast storage** (`008_pagasa_station_forecasts.sql`): new table for the per-station Below/Near/Above % (anon-read RLS).
+- **Weighted station→province aggregation** (`int_province_rainfall.sql`): weight-averages station severities up to provinces via `province_station_mapping` (weights sum to 1.0). `risk_scores.sql` now consumes it instead of the flat per-province categorical weight. Legacy province-level `pagasa_forecasts` retained as a graceful fallback.
+- **Scraper** (`pagasa_scraper.py` + `station_baseline.py`): writes per-station forecasts; a differentiated June-2026 station baseline (13 pilot stations) + a best-effort station-probability PDF parser (documented as UNVERIFIED against a live bulletin — falls back to baseline, same as the province path).
+- **Offline oracle + tests**: `preview_run.py` mirrors the new model; new `test_station_rainfall.py` (28 cases: severity math, calibration vs legacy, weighted aggregation, differentiation) + updated integration test.
+
+**Verification (thorough):** 142 Python unit/integration tests pass; **65 dbt tests pass against a real local Postgres** (full seed → run → test), and the dbt-produced `risk_scores` shows **10 distinct severities** (was 1) with correct multi-station weighted blends (Tarlac −27.5 = Clark/Cabanatuan midpoint; La Union −26.5 = Sinait/Dagupan) — matching the offline oracle exactly.
+
+**Calibration (tuned 2026-07-16):** severity is now `P(below-normal rainfall)` — the near-normal outcome carries **0** drought weight (was 0.25), so a climatological forecast no longer floors severity at ~0.42 — and `probabilities_from_anomaly` has an **±8% dead zone** so mild anomalies stay at the climatological `P_below`. Result at reproductive stage: the drought belt (−18…−30%) stays High/Medium and differentiates (Nueva Ecija ~87 down to Benguet/Mtn Province ~59 Medium), while **mild provinces stay Low** — Laguna/Batangas ~33, Quezon ~30 (was jumping to Medium under the first-pass calibration). Constants (`_PB_BASE`, `_PB_DEADZONE`, `_PB_DRY_SLOPE`, `_PB_WET_SLOPE`) are the single tuning surface in `outlook.py`, mirrored by the two SQL models. Verified: 147 Python tests + 65 dbt tests on real Postgres; dbt `risk_scores` shows 10 distinct severities with near-normal provinces Low and the drought belt differentiated.
+
+**Rollout (NOT yet live — on a branch):** (1) apply `008_pagasa_station_forecasts.sql` in Supabase; (2) merge the branch; (3) the next pipeline run (scraper writes station baseline → dbt weight-aggregates) differentiates provinces on the live dashboard. Non-breaking if merged before the migration only in that the new dbt source would be missing — so apply migration 008 FIRST.
+
+
 ## 🌏 Dashboard mass-appeal pass — 2026-07-16
 
 The dashboard was officer-facing and English-only in its chrome (only the advisories were bilingual), desktop-shaped, and offered no way to spread an advisory. This pass broadens it toward the farmers and barangay officials it ultimately serves. **All changes verified in-browser against the built static export and confirmed live on Vercel via content-hash match.**
