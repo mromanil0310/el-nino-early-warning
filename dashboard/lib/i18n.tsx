@@ -40,7 +40,7 @@ const DICT: Record<Lang, Record<string, Entry>> = {
     'lang.en': 'English',
     'lang.fil': 'Filipino',
     disclaimer:
-      'DISCLAIMER: This dashboard is a decision-support tool based on public PAGASA seasonal forecasts and PhilRice crop calendars. Risk scores are model estimates. Verify with your local Department of Agriculture or PAGASA office before taking action. Not a substitute for official advisories.',
+      'DISCLAIMER: This is an EXPERIMENTAL decision-support tool. Risk scores are indicative estimates from a heuristic model (PAGASA rainfall-outlook probabilities × crop growth-stage sensitivity) — they are NOT calibrated to measured crop losses and are NOT an official or scientifically-validated risk methodology. Treat them as relative priorities, not exact risk. Always verify with your local Department of Agriculture or PAGASA office before acting. Not a substitute for official advisories.',
     'state.loading': 'Loading risk scores…',
     'error.title': "Could not load this week's risk data",
     'error.retry': 'Try again',
@@ -97,9 +97,9 @@ const DICT: Record<Lang, Record<string, Entry>> = {
     'feedback.acted': 'Acted on advisory',
     'feedback.notYet': 'Not yet',
     'feedback.needHelp': 'Need help',
-    'footer.dataSources': 'Data sources: PAGASA Seasonal Climate Outlook · PhilRice El Niño Crop Calendar',
+    'footer.dataSources': 'Inputs: PAGASA seasonal rainfall outlook · crop planting/harvest calendars',
     'footer.formula':
-      'Risk formula: rainfall_severity_weight × crop_stage_vulnerability_index × 100 (PhilRice methodology)',
+      'Risk formula (experimental heuristic): rainfall severity × crop-stage sensitivity × 100 — indicative, not an official or validated model',
     'footer.guide': 'How to use this dashboard',
     'footer.built': 'Built by Biboy Labs · For pilot use by LGU agricultural offices only',
   },
@@ -111,7 +111,7 @@ const DICT: Record<Lang, Record<string, Entry>> = {
     'lang.en': 'English',
     'lang.fil': 'Filipino',
     disclaimer:
-      'PAALALA: Ang dashboard na ito ay kasangkapan sa paggawa ng desisyon batay sa pampublikong seasonal forecast ng PAGASA at crop calendar ng PhilRice. Ang mga marka ng panganib ay tantiya lamang ng modelo. Kumpirmahin muna sa inyong lokal na tanggapan ng Department of Agriculture o PAGASA bago kumilos. Hindi ito kapalit ng opisyal na abiso.',
+      'PAALALA: Ito ay EKSPERIMENTAL na kasangkapan sa paggawa ng desisyon. Ang mga marka ng panganib ay tantiya lamang mula sa isang heuristic na modelo (probabilidad ng ulan ng PAGASA × sensitivity ng yugto ng pananim) — HINDI ito naka-kalibrate sa aktwal na pinsala sa ani at HINDI opisyal o siyentipikong napatunayang pamamaraan. Ituring itong relatibong prayoridad, hindi eksaktong panganib. Kumpirmahin muna sa inyong lokal na tanggapan ng Department of Agriculture o PAGASA bago kumilos. Hindi ito kapalit ng opisyal na abiso.',
     'state.loading': 'Kinukuha ang mga marka ng panganib…',
     'error.title': 'Hindi ma-load ang datos ng panganib ngayong linggo',
     'error.retry': 'Subukan muli',
@@ -169,9 +169,9 @@ const DICT: Record<Lang, Record<string, Entry>> = {
     'feedback.notYet': 'Hindi pa',
     'feedback.needHelp': 'Kailangan ng tulong',
     'footer.dataSources':
-      'Pinagkunan ng datos: PAGASA Seasonal Climate Outlook · PhilRice El Niño Crop Calendar',
+      'Datos: seasonal rainfall outlook ng PAGASA · crop planting/harvest calendars',
     'footer.formula':
-      'Pormula ng panganib: rainfall_severity_weight × crop_stage_vulnerability_index × 100 (pamamaraan ng PhilRice)',
+      'Pormula ng panganib (eksperimental): rainfall severity × sensitivity ng yugto ng pananim × 100 — tantiya lamang, hindi opisyal o napatunayang modelo',
     'footer.guide': 'Paano gamitin ang dashboard na ito',
     'footer.built': 'Gawa ng Biboy Labs · Para sa pilot na gamit ng mga tanggapang pang-agrikultura ng LGU',
   },

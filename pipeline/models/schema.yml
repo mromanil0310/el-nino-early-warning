@@ -55,7 +55,7 @@ models:
               values: ['Much Below Normal', 'Below Normal', 'Near Normal', 'Above Normal', 'Much Above Normal']
 
   - name: stg_crop_calendars
-    description: "Current crop growth stage + PhilRice El Niño vulnerability per province × crop."
+    description: "Current crop growth stage + indicative water-stress vulnerability per province × crop (heuristic, not calibrated to measured yield loss)."
     columns:
       - name: province_id
         tests:
@@ -66,7 +66,7 @@ models:
           - accepted_values:
               values: ['pre-planting', 'early-vegetative', 'late-vegetative', 'reproductive', 'harvest', 'off-season']
       - name: vulnerability_index
-        description: "PhilRice vulnerability: 0.0 off-season → 1.0 reproductive."
+        description: "Indicative crop-stage water-stress sensitivity: 0.0 off-season → 1.0 reproductive (ordering grounded in agronomy; magnitudes heuristic)."
         tests:
           - not_null
           - accepted_values:

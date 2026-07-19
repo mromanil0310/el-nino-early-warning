@@ -156,7 +156,7 @@
   <div class="why">
     <h2>WHY THIS APP EXISTS</h2>
     <p>El Niño brings below-normal rainfall to large parts of the Philippines, and the damage it does to rice and corn depends entirely on <strong>timing</strong> — a dry spell during a crop's early growth is a setback; the same dry spell during its reproductive stage (when it needs water most) can wipe out the harvest. PAGASA already publishes the seasonal rainfall outlook every month. What didn't exist was a fast, simple way to translate that scientific bulletin into something an LGU agricultural officer or a cooperative could act on <em>this week</em>, for <em>their</em> province, for <em>their</em> crop's exact growth stage.</p>
-    <p>This dashboard closes that gap: it combines PAGASA's forecast with PhilRice's crop-vulnerability data to score every province × crop combination from Low to High risk, then uses AI to write a short, specific advisory in English and Filipino — plus an SMS-ready version cooperatives can forward directly to farmers.</p>
+    <p>This dashboard closes that gap: it combines PAGASA's rainfall outlook with each crop's current growth-stage sensitivity to score every province × crop combination from Low to High risk, then uses AI to write a short, specific advisory in English and Filipino — plus an SMS-ready version cooperatives can forward directly to farmers. <strong>It's an experimental prototype</strong> — a way to prioritise what to check, not an official or validated risk figure (see section 8).</p>
   </div>
 
   <div class="toc">
@@ -224,7 +224,7 @@
         </ul>
         <div class="callout">
           <b>🧮 Where the number comes from</b>
-          <span class="k">risk_score = rainfall_severity_weight × crop_stage_vulnerability_index × 100</span>. In plain terms: how dry PAGASA expects the season to be, multiplied by how vulnerable the crop is <em>at its current growth stage</em>. The same dry forecast scores very differently for a newly-planted field versus one about to flower.
+          <span class="k">risk_score = rainfall severity × crop-stage sensitivity × 100</span>. In plain terms: how dry PAGASA expects the season to be, multiplied by how vulnerable the crop is <em>at its current growth stage</em>. The same dry forecast scores very differently for a newly-planted field versus one about to flower. This is an <strong>experimental heuristic</strong> — the score is a relative priority, not a validated measure of actual crop loss (see section 8).
         </div>
       </div>
       <div>
@@ -233,12 +233,12 @@
           <div class="mock-body">
             <div class="m-row" style="text-align:center;">
               <div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--red);">0</div><div class="m-val">High</div></div>
-              <div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--amber);">17</div><div class="m-val">Medium</div></div>
-              <div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--primary-light);">4</div><div class="m-val">Low</div></div>
+              <div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--amber);">12</div><div class="m-val">Medium</div></div>
+              <div style="flex:1;"><div style="font-size:20px;font-weight:800;color:var(--primary-light);">9</div><div class="m-val">Low</div></div>
             </div>
             <div style="margin-top:10px;height:8px;border-radius:4px;overflow:hidden;display:flex;">
-              <div style="width:81%;background:var(--amber);"></div>
-              <div style="width:19%;background:var(--primary-light);"></div>
+              <div style="width:57%;background:var(--amber);"></div>
+              <div style="width:43%;background:var(--primary-light);"></div>
             </div>
           </div>
         </div>
@@ -275,9 +275,9 @@
               <span><span class="m-dot" style="background:var(--amber);"></span>Medium</span>
               <span><span class="m-dot" style="background:var(--primary-light);"></span>Low</span>
             </div>
-            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--amber);"></span>Pangasinan</span><span class="m-val">38 · Medium</span></div></div>
-            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--amber);"></span>Nueva Ecija</span><span class="m-val">38 · Medium</span></div></div>
-            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--primary-light);"></span>Batangas</span><span class="m-val">13 · Low</span></div></div>
+            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--amber);"></span>Pangasinan</span><span class="m-val">57 · Medium</span></div></div>
+            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--amber);"></span>Nueva Ecija</span><span class="m-val">44 · Medium</span></div></div>
+            <div class="m-card"><div class="m-row"><span class="m-lbl"><span class="m-dot" style="background:var(--primary-light);"></span>Batangas</span><span class="m-val">8 · Low</span></div></div>
           </div>
         </div>
         <p class="cap">Click a dot or a row — both do the same thing</p>
@@ -340,14 +340,14 @@
         <div class="mock">
           <div class="mock-bar"><span style="font-size:12px;font-weight:700;">Nueva Ecija · Palay</span></div>
           <div class="mock-body">
-            <div class="m-card med">
-              <div class="m-row"><span class="m-lbl">Nueva Ecija</span><span class="m-badge med">Medium 38</span></div>
+            <div class="m-card hi">
+              <div class="m-row"><span class="m-lbl">Nueva Ecija</span><span class="m-badge hi">High 87</span></div>
               <div class="m-val" style="margin-top:4px;">Region III · Palay (wet)</div>
             </div>
             <div class="m-card" style="font-size:10.5px;">
               <div>Stage: <strong>reproductive</strong></div>
               <div>Outlook: <strong>Below Normal</strong></div>
-              <div>Rainfall: <strong>-28%</strong></div>
+              <div>Rainfall: <strong>-30%</strong></div>
             </div>
             <div class="m-card ok" style="font-size:10px;">
               Prioritize irrigation this week — reproductive-stage rice is most vulnerable to a rainfall deficit right now.
@@ -425,8 +425,12 @@
     <div class="layout">
       <div>
         <div class="callout warn">
-          <b>⚠️ A decision-support tool, not an official advisory</b>
-          Risk scores are model estimates based on public PAGASA seasonal forecasts and PhilRice crop-calendar data. They are meant to help you decide what to check on, not to replace official guidance. <strong>Always verify with your local Department of Agriculture or PAGASA office</strong> before acting on a High-risk reading.
+          <b>⚠️ An experimental tool — not an official or scientifically-validated advisory</b>
+          Risk scores are <strong>indicative estimates from a heuristic model</strong>, not an official or peer-reviewed methodology. They help you decide what to check on first; they do not measure actual crop loss. <strong>Always verify with your local Department of Agriculture or PAGASA office</strong> before acting on a High-risk reading.
+        </div>
+        <div class="callout">
+          <b>🔬 How the score is built — and what it is <em>not</em></b>
+          It multiplies two things: how far below normal PAGASA expects rainfall to be, and how sensitive the crop is at its current growth stage (rice is most sensitive at flowering — that part is well-established science). <strong>But</strong> the exact sensitivity numbers, the scaling, and the Low/Medium/High cut-offs are <em>indicative</em> — they haven't been calibrated against real recorded harvest losses, and no official body has validated them. So read a score as a <em>relative priority</em> ("check this province before that one"), not as an exact or guaranteed measure of risk.
         </div>
         <p>This same disclaimer appears in a banner on the live dashboard — it isn't just fine print here.</p>
       </div>
@@ -434,7 +438,7 @@
         <div class="mock">
           <div class="mock-bar"><span style="font-size:12px;font-weight:700;">On every page</span></div>
           <div class="mock-body">
-            <div class="m-disclaimer">DISCLAIMER: This dashboard is a decision-support tool based on public PAGASA seasonal forecasts and PhilRice crop calendars. Risk scores are model estimates. Verify with your local DA or PAGASA office before taking action.</div>
+            <div class="m-disclaimer">DISCLAIMER: Experimental decision-support tool. Risk scores are indicative estimates from a heuristic model — not an official or validated methodology. Verify with your local DA or PAGASA office before taking action.</div>
           </div>
         </div>
         <p class="cap">Sits right under the header, always visible</p>
@@ -462,7 +466,6 @@
     <h2 class="sec-title"><span class="step-num">10</span>On the roadmap</h2>
     <p class="sec-intro">Planned improvements — <strong>not yet available</strong>, listed so you know where this is heading.</p>
     <ul class="points">
-      <li><strong>Sharper per-province accuracy</strong> — risk scores tuned to each province's own PAGASA weather stations, so neighbouring provinces get their own distinct number instead of sharing one.</li>
       <li><strong>Nationwide coverage</strong> — all 82 provinces, not just the Luzon pilot.</li>
       <li><strong>More crops</strong> — beyond palay and corn (for example sugarcane and high-value vegetables).</li>
       <li><strong>More languages</strong> — advisories in Ilocano and Cebuano, alongside English and Filipino.</li>
@@ -478,7 +481,7 @@
 
   <footer>
     <p class="lead">El Niño Early Warning · Biboy Labs</p>
-    <p>Data sources: PAGASA Seasonal Climate Outlook · PhilRice El Niño Crop Calendar</p>
+    <p>Inputs: PAGASA seasonal rainfall outlook · crop planting/harvest calendars · experimental risk heuristic</p>
     <p><a href="https://el-nino-early-warning.vercel.app">Open the dashboard →</a></p>
   </footer>
 

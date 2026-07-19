@@ -2,7 +2,12 @@
 -- CORE MODEL: El Niño agricultural risk scoring
 -- Implements: risk_score = rainfall_severity_weight × crop_stage_vulnerability_index × 100
 --
--- Formula source: PhilRice El Niño Impact Assessment Framework
+-- METHODOLOGY NOTE: this is an EXPERIMENTAL heuristic, not an official or validated
+-- methodology. risk = hazard (P below-normal rainfall, from PAGASA outlooks) × vulnerability
+-- (crop growth-stage water sensitivity). The stage ORDERING is grounded in established
+-- agronomy (rice is most water-sensitive at the reproductive stage); the specific index
+-- magnitudes, the ×100 scaling, and the High/Medium/Low thresholds are INDICATIVE — they
+-- are not calibrated to measured crop losses. Scores are relative priorities, not exact risk.
 -- Thresholds: High > 65, Medium 35–65, Low < 35
 --
 -- Materializes as a TABLE for fast dashboard queries.

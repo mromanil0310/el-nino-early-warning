@@ -10,11 +10,15 @@ the tests assert against. If you change the stage windows or vulnerability indic
 change BOTH and keep test_risk_scoring.py in sync. The dbt schema tests in
 models/schema.yml additionally constrain the SQL output to the value set below.
 
-PhilRice El Niño vulnerability (most sensitive at reproductive/flowering):
+Crop growth-stage water-stress sensitivity (INDICATIVE index, not calibrated to measured
+yield loss). The ORDERING — reproductive/flowering most sensitive, vegetative less so — is
+well established in the agronomy literature; the specific magnitudes below are heuristic
+placeholders and should be calibrated to a published yield-response source (e.g. FAO Ky
+factors) before any authoritative use.
     pre-planting        0.4   manageable via delayed-planting decision
     early-vegetative    0.5   planting window
     late-vegetative     0.7   planting_end → midpoint to harvest
-    reproductive        1.0   flowering/grain-filling — spikelet sterility
+    reproductive        1.0   flowering/grain-filling — spikelet sterility (most sensitive)
     harvest             0.3   delayed harvest / threshing losses
     off-season          0.0   no growing crop at risk
 """

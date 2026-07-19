@@ -163,7 +163,7 @@ export default function Home() {
         <title>El Niño Early Warning — Philippine Agriculture Dashboard</title>
         <meta
           name="description"
-          content="Weekly El Niño agricultural risk scores for Philippine provinces. Based on PAGASA seasonal forecasts and PhilRice crop calendar data."
+          content="Weekly El Niño agricultural risk scores for Philippine provinces — an experimental decision-support prototype built on PAGASA rainfall outlooks and crop growth-stage sensitivity. Indicative, not an official or validated risk methodology."
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>

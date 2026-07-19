@@ -29,7 +29,7 @@ with_stage AS (
         CURRENT_DATE AS score_date,
 
         -- Determine crop growth stage based on current date vs crop calendar
-        -- Stages follow PhilRice vulnerability classification:
+        -- Standard rice growth stages:
         --   pre-planting (before planting window)
         --   vegetative   (planting_start → ~halfway to harvest)
         --   reproductive (flowering window — highest El Niño sensitivity)
@@ -49,9 +49,10 @@ with_stage AS (
             ELSE 'off-season'
         END AS crop_stage,
 
-        -- PhilRice El Niño crop stage vulnerability index
-        -- Source: PhilRice "Effects of El Niño on Rice Production in the Philippines"
-        -- Reproductive (flowering/grain-filling) is most sensitive
+        -- Crop growth-stage water-stress sensitivity — INDICATIVE index (not calibrated
+        -- to measured yield loss). The ordering (reproductive most sensitive) is grounded
+        -- in agronomy literature; magnitudes are heuristic. See crop_stage.py + README
+        -- "Risk Scoring" for the methodology note and limitations.
         CASE
             WHEN CURRENT_DATE < planting_start
                 THEN 0.4   -- pre-planting: manageable via delayed planting decision

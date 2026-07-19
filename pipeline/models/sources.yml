@@ -83,7 +83,7 @@ sources:
               - not_null
 
       - name: crop_calendars
-        description: "PhilRice crop calendar by province, crop, and season. 35 rows covering 15 provinces × palay wet/dry + corn."
+        description: "Crop planting/harvest calendar by province, crop, and season. 35 rows covering 15 provinces × palay wet/dry + corn."
         columns:
           - name: id
             tests:

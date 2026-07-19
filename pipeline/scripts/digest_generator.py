@@ -39,8 +39,8 @@ ANTHROPIC_API_KEY = os.environ["ANTHROPIC_API_KEY"]
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
 claude = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-DISCLAIMER_EN = "NOTE: This is a decision-support tool based on public PAGASA and PSA data. Verify with your local DA/PAGASA office before acting."
-DISCLAIMER_TL = "PAALALA: Ang impormasyong ito ay batay sa pampublikong datos ng PAGASA at PSA. Kumpirmahin sa inyong lokal na DA/PAGASA bago kumilos."
+DISCLAIMER_EN = "NOTE: Experimental estimate from a decision-support model (not an official or validated risk methodology), based on public PAGASA + PSA data. Verify with your local DA/PAGASA office before acting."
+DISCLAIMER_TL = "PAALALA: Eksperimentong tantiya mula sa isang modelo (hindi opisyal o napatunayang pamamaraan), batay sa pampublikong datos ng PAGASA at PSA. Kumpirmahin sa inyong lokal na DA/PAGASA bago kumilos."
 
 
 def get_iso_week_start(d: date) -> date:
