@@ -89,6 +89,8 @@ This scoring is an **experimental heuristic**, not a standardized, official, or 
 
 **To make it authoritative:** calibrate indices to a published source (e.g. FAO Ky factors / IRRI / PhilRice), adopt an established drought index, validate thresholds against historical loss data, and have a PAGASA/PhilRice/DA agronomist review it. The concrete plan — workstreams, data to acquire, acceptance criteria, and references — is in **[`docs/methodology-and-validation.md`](docs/methodology-and-validation.md)**.
 
+**🤝 Open to scientific scrutiny.** This is deliberately public and unfinished. Review, corrections, data, or collaboration from the climate/agronomy research community and from PAGASA / PhilRice / IRRI / DA are genuinely welcome — please [open an issue or PR](https://github.com/mromanil0310/el-nino-early-warning/issues).
+
 ---
 
 ## Pilot Provinces (15 Luzon)
