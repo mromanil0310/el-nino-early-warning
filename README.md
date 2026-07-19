@@ -87,7 +87,7 @@ This scoring is an **experimental heuristic**, not a standardized, official, or 
 - The model has **no empirical validation** against historical El Niño yield data, so a score of "57" does not correspond to any measured loss level. Scores are **relative priorities, not absolute risk.**
 - Earlier versions cited a "PhilRice El Niño Impact Assessment Framework" — that specific document could not be verified and the claim has been removed.
 
-**To make it authoritative** (roadmap): calibrate indices to a published source (e.g. FAO Ky factors / IRRI / PhilRice), adopt an established drought index, validate thresholds against historical loss data, and have a PAGASA/PhilRice/DA agronomist review it.
+**To make it authoritative:** calibrate indices to a published source (e.g. FAO Ky factors / IRRI / PhilRice), adopt an established drought index, validate thresholds against historical loss data, and have a PAGASA/PhilRice/DA agronomist review it. The concrete plan — workstreams, data to acquire, acceptance criteria, and references — is in **[`docs/methodology-and-validation.md`](docs/methodology-and-validation.md)**.
 
 ---
 
